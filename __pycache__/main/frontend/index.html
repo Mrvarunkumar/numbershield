@@ -1,0 +1,514 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#06090f">
+<meta name="description" content="NumberShield - Evidence-based personal phone-number privacy assistant. Discover exposure, manage consent, and take privacy action.">
+<title>NumberShield — Privacy Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app-shell">
+
+<!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-inner">
+    <a class="brand" href="#" aria-label="NumberShield home">
+      <div class="brand-logo"><span>N</span><sup>+</sup></div>
+      <div class="brand-text">
+        <strong>NumberShield</strong>
+        <small>PRIVACY COMMAND CENTER</small>
+      </div>
+    </a>
+
+    <div class="nav-section-label">WORKSPACE</div>
+    <nav id="main-nav" role="navigation" aria-label="Main navigation">
+      <button class="nav-item active" data-view="overview"   id="nav-overview">
+        <span class="nav-icon">⬡</span><span class="nav-label">Overview</span>
+      </button>
+      <button class="nav-item" data-view="exposure"   id="nav-exposure">
+        <span class="nav-icon">⚡</span><span class="nav-label">Exposure Tracker</span>
+      </button>
+      <button class="nav-item" data-view="discovery"  id="nav-discovery">
+        <span class="nav-icon">⌕</span><span class="nav-label">Exposure Discovery</span>
+      </button>
+      <button class="nav-item" data-view="consent"    id="nav-consent">
+        <span class="nav-icon">◉</span><span class="nav-label">Consent Manager</span>
+      </button>
+      <button class="nav-item" data-view="requests"   id="nav-requests">
+        <span class="nav-icon">▤</span><span class="nav-label">Privacy Requests</span>
+      </button>
+      <button class="nav-item" data-view="audit"      id="nav-audit">
+        <span class="nav-icon">⟲</span><span class="nav-label">Audit History</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="demo-badge">
+        <div class="demo-dot"></div>
+        <div class="demo-text">
+          <strong>Local Demo Mode</strong>
+          <small>Synthetic data · No real scans</small>
+        </div>
+      </div>
+      <button id="btn-reset" class="btn-reset" type="button" title="Reset all demo data to initial state">
+        ↻ Reset demo data
+      </button>
+      <div class="sidebar-version">NUMBER SHIELD <span>v1.0 MVP</span></div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════ MAIN ═══════════════════════════ -->
+<main class="main-content">
+
+  <!-- Top bar -->
+  <header class="topbar" id="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">☰</button>
+    <div class="topbar-left">
+      <div class="breadcrumb"><span class="bc-root">PERSONAL DATA DEFENSE</span> / <span id="bc-current">OVERVIEW</span></div>
+      <h1 id="page-title">Privacy Overview</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="status-pill">
+        <span class="status-dot"></span>SYSTEM OPERATIONAL
+      </div>
+    </div>
+  </header>
+
+  <!-- Global notice -->
+  <div class="notice-bar" id="notice-bar">
+    <div class="notice-icon">i</div>
+    <div class="notice-content">
+      <strong>Prototype boundary</strong>
+      <p>Consent changes stay local only. Discovery contacts only configured, explicitly authorised providers. No internet-wide phone number scan is possible.</p>
+    </div>
+    <button class="notice-close" id="notice-close" aria-label="Dismiss notice">×</button>
+  </div>
+
+  <!-- ─────────────── OVERVIEW ─────────────── -->
+  <section class="view active" id="view-overview">
+    <div class="hero-section">
+      <div class="hero-text">
+        <div class="eyebrow cyan-text">YOUR IDENTITY. YOUR RULES.</div>
+        <h2>Take control of your <span class="gradient-text">digital footprint.</span></h2>
+        <p>Discover where your phone number may have been shared, manage consent records, and organise privacy actions — all from one place.</p>
+      </div>
+      <div class="hero-shield" aria-hidden="true">
+        <div class="shield-ring outer"></div>
+        <div class="shield-ring mid"></div>
+        <div class="shield-core"><span>N</span><sup>+</sup></div>
+      </div>
+    </div>
+
+    <!-- KPI cards -->
+    <div class="kpi-grid" id="kpi-grid">
+      <article class="kpi-card" id="kpi-services">
+        <div class="kpi-icon services-icon">◈</div>
+        <div class="kpi-body">
+          <div class="kpi-label">SERVICES TRACKED</div>
+          <div class="kpi-value" id="kv-services">—</div>
+          <div class="kpi-sub">Recorded disclosure points</div>
+        </div>
+      </article>
+      <article class="kpi-card" id="kpi-consents">
+        <div class="kpi-icon consents-icon">✓</div>
+        <div class="kpi-body">
+          <div class="kpi-label">ACTIVE CONSENTS</div>
+          <div class="kpi-value" id="kv-consents">—</div>
+          <div class="kpi-sub">Local permission records</div>
+        </div>
+      </article>
+      <article class="kpi-card" id="kpi-exposure">
+        <div class="kpi-icon exposure-icon">⚡</div>
+        <div class="kpi-body">
+          <div class="kpi-label">EXPOSURE SIGNALS</div>
+          <div class="kpi-value" id="kv-exposure">—</div>
+          <div class="kpi-sub" id="kv-exposure-detail">Demo records to review</div>
+        </div>
+      </article>
+      <article class="kpi-card" id="kpi-requests">
+        <div class="kpi-icon requests-icon">▤</div>
+        <div class="kpi-body">
+          <div class="kpi-label">DRAFT REQUESTS</div>
+          <div class="kpi-value" id="kv-requests">—</div>
+          <div class="kpi-sub">Not yet submitted</div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Risk + Quick actions -->
+    <div class="two-col-grid">
+      <article class="panel risk-panel">
+        <div class="panel-header">
+          <div>
+            <div class="eyebrow">RULE-BASED ANALYSIS</div>
+            <h3>Exposure Risk Indicator</h3>
+          </div>
+          <span class="badge badge-demo">DEMO MODEL</span>
+        </div>
+        <div class="risk-display">
+          <div class="gauge-wrap">
+            <div class="gauge" id="gauge" role="meter" aria-label="Risk score gauge">
+              <div class="gauge-inner">
+                <strong id="gauge-score">—</strong>
+                <small>/ 100</small>
+              </div>
+            </div>
+          </div>
+          <div class="risk-info">
+            <span class="risk-label" id="risk-label-badge">Calculating…</span>
+            <h4>Privacy exposure signals</h4>
+            <p id="risk-text">Loading analysis…</p>
+            <div class="risk-legend">
+              <span class="legend-dot guarded"></span><span>0–29 Guarded</span>
+              <span class="legend-dot elevated"></span><span>30–59 Elevated</span>
+              <span class="legend-dot high"></span><span>60+ High</span>
+            </div>
+          </div>
+        </div>
+        <div class="panel-footer">Heuristic only — not a probability of harm or an internet scan.</div>
+      </article>
+
+      <article class="panel quick-panel">
+        <div class="panel-header">
+          <div>
+            <div class="eyebrow">QUICK ACTIONS</div>
+            <h3>Privacy Toolkit</h3>
+          </div>
+        </div>
+        <div class="quick-actions">
+          <button class="quick-action" data-goto="consent" id="qa-consent">
+            <div class="qa-icon">◉</div>
+            <div class="qa-text">
+              <strong>Review Permissions</strong>
+              <small>Check or withdraw local consent records</small>
+            </div>
+            <span class="qa-arrow">↗</span>
+          </button>
+          <button class="quick-action" data-goto="discovery" id="qa-discovery">
+            <div class="qa-icon">⌕</div>
+            <div class="qa-text">
+              <strong>Run Exposure Discovery</strong>
+              <small>Check configured sources with explicit opt-in</small>
+            </div>
+            <span class="qa-arrow">↗</span>
+          </button>
+          <button class="quick-action" data-goto="requests" id="qa-requests">
+            <div class="qa-icon">▤</div>
+            <div class="qa-text">
+              <strong>Create Privacy Request</strong>
+              <small>Draft an erasure or withdrawal request</small>
+            </div>
+            <span class="qa-arrow">↗</span>
+          </button>
+          <button class="quick-action" data-goto="audit" id="qa-audit">
+            <div class="qa-icon">⟲</div>
+            <div class="qa-text">
+              <strong>View Audit History</strong>
+              <small>Inspect all actions taken in this session</small>
+            </div>
+            <span class="qa-arrow">↗</span>
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <!-- Recent services table -->
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="eyebrow">DISCLOSURE INVENTORY</div>
+          <h3>Recently Tracked Services</h3>
+        </div>
+        <button class="btn-link" data-goto="consent" id="view-all-btn">View all →</button>
+      </div>
+      <div class="table-wrap">
+        <table id="recent-table" aria-label="Recently tracked services">
+          <thead>
+            <tr><th>SERVICE</th><th>CATEGORY</th><th>LOCAL CONSENT</th><th>DATA SOURCE</th></tr>
+          </thead>
+          <tbody id="recent-tbody"></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <!-- ─────────────── EXPOSURE TRACKER ─────────────── -->
+  <section class="view" id="view-exposure">
+    <div class="view-intro">
+      <div>
+        <div class="eyebrow cyan-text">DISCLOSURE INTELLIGENCE</div>
+        <h2>Exposure Tracker</h2>
+        <p>Review recorded signals and their evidence notes. All records are synthetic demo data.</p>
+      </div>
+      <span class="badge badge-warning">SYNTHETIC DATA</span>
+    </div>
+
+    <div id="exposure-summary-bar" class="exposure-summary-bar"></div>
+
+    <div class="filter-row">
+      <label class="filter-label" for="sev-filter">Filter by severity:</label>
+      <select id="sev-filter" class="select-input" aria-label="Filter exposures by severity">
+        <option value="">All severities</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+    </div>
+
+    <div id="exposure-grid" class="exposure-grid"></div>
+  </section>
+
+  <!-- ─────────────── EXPOSURE DISCOVERY ─────────────── -->
+  <section class="view" id="view-discovery">
+    <div class="view-intro">
+      <div>
+        <div class="eyebrow cyan-text">CONSENT-BASED EVIDENCE SEARCH</div>
+        <h2>Exposure Discovery</h2>
+        <p>Check three evidence sources with separate opt-in. Nothing runs until you confirm consent.</p>
+      </div>
+      <span class="badge badge-info">NO RAW INPUT STORAGE</span>
+    </div>
+
+    <div class="discovery-layout">
+      <!-- Left column: controls -->
+      <div class="discovery-controls">
+        <article class="panel">
+          <div class="panel-header">
+            <div><h3>1 · Choose Sources</h3><p class="muted-text">Only selected sources will be queried.</p></div>
+            <span class="badge badge-info">OPT-IN</span>
+          </div>
+
+          <div class="source-list">
+            <label class="source-item" for="src-gmail">
+              <input type="checkbox" id="src-gmail">
+              <div class="source-info">
+                <strong>Gmail Registration Evidence</strong>
+                <small>Search for account/registration email clues using read-only Google access.</small>
+                <em id="gmail-state" class="source-state">Checking configuration…</em>
+              </div>
+            </label>
+
+            <label class="source-item" for="src-web">
+              <input type="checkbox" id="src-web">
+              <div class="source-info">
+                <strong>Public-Web Search</strong>
+                <small>Search indexed pages for an exact phone-number string via configured API.</small>
+                <em id="web-state" class="source-state">Checking configuration…</em>
+              </div>
+            </label>
+
+            <label class="source-item" for="src-breach">
+              <input type="checkbox" id="src-breach">
+              <div class="source-info">
+                <strong>Known Breach Catalogue</strong>
+                <small>Have I Been Pwned account lookup by email only — not a phone-number search.</small>
+                <em id="breach-state" class="source-state">Checking configuration…</em>
+              </div>
+            </label>
+          </div>
+
+          <div class="consent-box">
+            <label class="consent-check" for="discovery-consent">
+              <input type="checkbox" id="discovery-consent">
+              <span>I own or am authorised to check these identifiers. I understand selected providers may receive the query and that results are incomplete.</span>
+            </label>
+          </div>
+
+          <div class="field-row">
+            <label class="field-label" for="disc-phone">
+              Phone number <small>Optional · for public web search only</small>
+              <input type="tel" id="disc-phone" class="text-input" autocomplete="off" maxlength="32" placeholder="Enter only if opting in to web search">
+            </label>
+            <label class="field-label" for="disc-email">
+              Email address <small>Optional · for breach check only</small>
+              <input type="email" id="disc-email" class="text-input" autocomplete="off" maxlength="254" placeholder="you@example.com">
+            </label>
+          </div>
+
+          <div class="disc-actions">
+            <button id="btn-connect-gmail" class="btn-secondary" type="button" disabled>Connect Gmail</button>
+            <button id="btn-disconnect-gmail" class="btn-secondary" type="button" disabled>Disconnect Gmail</button>
+            <button id="btn-run-discovery" class="btn-primary" type="button">⌕ Run Selected Checks</button>
+          </div>
+
+          <p class="warning-text">⚠ Never enter passwords, OTPs, or someone else's number. Use your own identifiers only.</p>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div><h3>Integration Status</h3></div>
+          </div>
+          <div id="disc-status" class="disc-status-display">Checking available integrations…</div>
+        </article>
+      </div>
+
+      <!-- Right column: limitations -->
+      <article class="panel limitations-panel">
+        <div class="panel-header">
+          <div><h3>2 · What This Can and Cannot Tell You</h3><p class="muted-text">Evidence, not a universal registry.</p></div>
+        </div>
+        <div class="limits-list">
+          <div class="limit-item">
+            <div class="limit-icon">✉</div>
+            <div><strong>Gmail</strong><p>Can find messages that look like registrations. A match does not prove the service received your number.</p></div>
+          </div>
+          <div class="limit-item">
+            <div class="limit-icon">🌐</div>
+            <div><strong>Public Web</strong><p>Covers indexed pages only; results may be stale, copied, or unrelated to your number.</p></div>
+          </div>
+          <div class="limit-item">
+            <div class="limit-icon">⚠</div>
+            <div><strong>Breach Catalogue</strong><p>Checks email against known incidents. HIBP does not offer arbitrary phone-number search via this endpoint.</p></div>
+          </div>
+          <div class="limit-item">
+            <div class="limit-icon">🔒</div>
+            <div><strong>Privacy by Design</strong><p>Inputs and results processed for this response only. Not written to local database or audit log.</p></div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Results panel -->
+    <article class="panel results-panel" id="results-panel">
+      <div class="panel-header">
+        <div>
+          <div class="eyebrow">SOURCE-PROVENANCED FINDINGS</div>
+          <h3>Evidence Results</h3>
+          <p class="muted-text">Review source, date, confidence, and rationale before acting.</p>
+        </div>
+        <span class="badge" id="result-count-badge">0 findings</span>
+      </div>
+      <div id="disc-errors"></div>
+      <div id="disc-results" class="disc-results">
+        <div class="empty-state">
+          <div class="empty-icon">⌕</div>
+          <p>No discovery run yet. Select sources and confirm consent to begin.</p>
+        </div>
+      </div>
+      <div id="disc-limits" class="disc-limitations hidden"></div>
+    </article>
+  </section>
+
+  <!-- ─────────────── CONSENT MANAGER ─────────────── -->
+  <section class="view" id="view-consent">
+    <div class="view-intro">
+      <div>
+        <div class="eyebrow cyan-text">PERMISSION CONTROL</div>
+        <h2>Consent Manager</h2>
+        <p>Review and update consent records maintained locally in NumberShield. Changes here do not notify external services.</p>
+      </div>
+      <span class="badge badge-warning">LOCAL RECORDS ONLY</span>
+    </div>
+
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Tracked Services</h3>
+          <p class="muted-text">Changing a record does <em>not</em> notify the external service.</p>
+        </div>
+        <span class="badge" id="consent-count-badge">0 services</span>
+      </div>
+      <div class="table-wrap">
+        <table id="consent-table" aria-label="Consent records">
+          <thead>
+            <tr>
+              <th>SERVICE</th><th>CATEGORY</th><th>STATUS</th>
+              <th>LAST UPDATED</th><th>CHANGE STATUS</th>
+            </tr>
+          </thead>
+          <tbody id="consent-tbody"></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <!-- ─────────────── PRIVACY REQUESTS ─────────────── -->
+  <section class="view" id="view-requests">
+    <div class="view-intro">
+      <div>
+        <div class="eyebrow cyan-text">YOUR NEXT STEP</div>
+        <h2>Privacy Requests</h2>
+        <p>Generate a draft request for review. This prototype does not send it — drafts must be submitted manually.</p>
+      </div>
+    </div>
+
+    <div class="requests-layout">
+      <article class="panel create-panel">
+        <div class="panel-header">
+          <div><h3>Create a Request Draft</h3><p class="muted-text">Choose a service and action type.</p></div>
+        </div>
+        <form id="request-form" novalidate>
+          <label class="field-label" for="svc-choice">
+            Service
+            <select id="svc-choice" class="select-input" required aria-label="Select service for privacy request"></select>
+          </label>
+          <label class="field-label" for="req-type">
+            Request type
+            <select id="req-type" class="select-input" aria-label="Select request type">
+              <option value="deletion">Personal data erasure (Right to be Forgotten)</option>
+              <option value="consent_withdrawal">Withdraw consent for data processing</option>
+              <option value="access">Data subject access request (DSAR)</option>
+            </select>
+          </label>
+          <button class="btn-primary full-width" type="submit" id="btn-create-request">✦ Generate Request Draft</button>
+        </form>
+      </article>
+
+      <div class="requests-list-wrap">
+        <div id="request-list" class="request-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────── AUDIT ─────────────── -->
+  <section class="view" id="view-audit">
+    <div class="view-intro">
+      <div>
+        <div class="eyebrow cyan-text">ACCOUNTABILITY</div>
+        <h2>Audit History</h2>
+        <p>History of all actions taken inside this prototype session.</p>
+      </div>
+      <button class="btn-secondary" id="btn-refresh-audit" type="button">↻ Refresh</button>
+    </div>
+
+    <article class="panel">
+      <div id="audit-list"></div>
+    </article>
+  </section>
+
+  <footer class="app-footer">
+    <span>© 2026 NumberShield · Hackathon Prototype · Synthetic data only</span>
+    <span>Built for user agency <b>◆</b></span>
+  </footer>
+
+</main>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Draft modal -->
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-box">
+    <button class="modal-close" id="modal-close" aria-label="Close modal">×</button>
+    <div class="eyebrow cyan-text">REQUEST PREVIEW</div>
+    <h2 id="modal-title">Privacy Request Draft</h2>
+    <p id="modal-meta" class="muted-text"></p>
+    <pre id="modal-draft" tabindex="0"></pre>
+    <div class="modal-actions">
+      <button class="btn-primary" id="btn-copy-draft" type="button">📋 Copy Draft</button>
+      <button class="btn-secondary" id="btn-close-modal" type="button">Close</button>
+    </div>
+    <p class="warning-text">Draft only. This has NOT been sent to any service.</p>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
