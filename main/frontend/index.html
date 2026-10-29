@@ -45,6 +45,9 @@
       <button class="nav-item" data-view="audit"      id="nav-audit">
         <span class="nav-icon">⟲</span><span class="nav-label">Audit History</span>
       </button>
+      <button class="nav-item" data-view="phone-privacy" id="nav-phone-privacy">
+        <span class="nav-icon">📱</span><span class="nav-label">Phone Privacy Upgrade</span>
+      </button>
     </nav>
 
     <div class="sidebar-bottom">
@@ -479,6 +482,145 @@
 
     <article class="panel">
       <div id="audit-list"></div>
+    </article>
+  </section>
+
+  <!-- ─────────────── PHONE PRIVACY UPGRADE ─────────────── -->
+  <section class="view" id="view-phone-privacy">
+    <div class="view-intro">
+      <div>
+        <div class="eyebrow cyan-text">PHONE PRIVACY UPGRADE</div>
+        <h2>Phone Privacy Upgrade</h2>
+        <p>Upgrade personal phone-number privacy with focused evidence checks, verification, and prepared privacy actions — layered onto your existing NumberShield controls.</p>
+      </div>
+      <span class="badge badge-info" id="phone-privacy-badge">PHONE UPGRADE</span>
+    </div>
+
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="eyebrow">PHONE NUMBER EXPOSURE FINDER</div>
+          <h3>Phone Number Exposure Finder</h3>
+          <p class="muted-text">Locate recorded exposure signals associated with your phone number.</p>
+        </div>
+        <span class="badge badge-demo" id="pp-finder-badge">DEMO DATA</span>
+      </div>
+      <div id="pp-finder-output">
+        <div class="empty-state">
+          <div class="empty-icon">📱</div>
+          <p id="pp-finder-msg">Loading exposure signals…</p>
+        </div>
+      </div>
+      <div class="panel-footer">Prototype boundary: no live phone-number scan is available. Findings shown are synthetic demo records.</div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="eyebrow">PUBLIC-WEB SEARCH</div>
+          <h3>Public-Web Search</h3>
+          <p class="muted-text">Check indexed public sources for your number.</p>
+        </div>
+        <span class="badge" id="pp-web-badge">STATUS</span>
+      </div>
+      <p id="pp-web-text" class="muted-text">Checking configuration…</p>
+      <div class="disc-actions">
+        <button class="btn-secondary" data-goto="discovery" type="button">Open Exposure Discovery</button>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="eyebrow">GMAIL REGISTRATION EVIDENCE</div>
+          <h3>Gmail Registration Evidence</h3>
+          <p class="muted-text">Use read-only Gmail access to examine registration clues.</p>
+        </div>
+        <span class="badge" id="pp-gmail-badge">STATUS</span>
+      </div>
+      <p id="pp-gmail-text" class="muted-text">Checking configuration…</p>
+      <div class="disc-actions">
+        <button class="btn-secondary" data-goto="discovery" type="button">Open Exposure Discovery</button>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="eyebrow">PUBLIC BREACH CATALOGUE</div>
+          <h3>Public Breach Catalogue</h3>
+          <p class="muted-text">Check known breach incidents for your identifiers.</p>
+        </div>
+        <span class="badge" id="pp-breach-badge">STATUS</span>
+      </div>
+      <p id="pp-breach-text" class="muted-text">Checking configuration…</p>
+      <p class="warning-text">The breach catalogue checks registered email addresses against known incidents; it does not search arbitrary phone numbers.</p>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="eyebrow">EVIDENCE VERIFICATION</div>
+          <h3>Evidence Verification</h3>
+          <p class="muted-text">Verify the evidence behind exposure findings before acting.</p>
+        </div>
+      </div>
+      <p id="pp-verify-text" class="muted-text">Review verified evidence tied to recorded exposure signals.</p>
+      <div class="panel-footer">Evidence is source-provenanced; synthetic demo data is clearly labelled.</div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="eyebrow">EXPLAINABLE RISK ANALYSIS</div>
+          <h3>Explainable Risk Analysis</h3>
+          <p class="muted-text">Understand the risk score and contributing signals.</p>
+        </div>
+        <span class="badge badge-demo" id="pp-risk-badge">DEMO MODEL</span>
+      </div>
+      <div class="risk-display">
+        <div class="gauge-wrap">
+          <div class="gauge" id="pp-gauge" role="meter" aria-label="Risk score gauge">
+            <div class="gauge-inner"><strong id="pp-gauge-score">—</strong><small>/ 100</small></div>
+          </div>
+        </div>
+        <div class="risk-info">
+          <span class="risk-label" id="pp-risk-label-badge">Calculating…</span>
+          <h4>Risk score</h4>
+          <p id="pp-risk-text">Loading analysis…</p>
+        </div>
+      </div>
+      <div class="panel-footer">Heuristic only — not a probability of harm or an internet scan.</div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="eyebrow">CONSENT MANAGEMENT</div>
+          <h3>Consent Management</h3>
+          <p class="muted-text">Review consent posture for tracked services.</p>
+        </div>
+        <span class="badge" id="pp-consent-badge">LOCAL</span>
+      </div>
+      <div id="pp-consent-count" class="disc-status-display">Loading consent records…</div>
+      <div class="disc-actions">
+        <button class="btn-secondary" data-goto="consent" type="button">Open Consent Manager</button>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="eyebrow">PRIVACY REQUEST CENTER</div>
+          <h3>Privacy Request Center</h3>
+          <p class="muted-text">Draft and manage privacy requests.</p>
+        </div>
+        <span class="badge" id="pp-requests-badge">DRAFTS</span>
+      </div>
+      <div id="pp-requests-count" class="disc-status-display">Loading draft requests…</div>
+      <div class="disc-actions">
+        <button class="btn-secondary" data-goto="requests" type="button">Open Privacy Requests</button>
+      </div>
     </article>
   </section>
 

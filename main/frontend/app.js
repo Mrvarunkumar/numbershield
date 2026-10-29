@@ -14,6 +14,7 @@ const PAGE_TITLES = {
   consent:   'Consent Manager',
   requests:  'Privacy Requests',
   audit:     'Audit History',
+  phone_privacy: 'Phone Privacy Upgrade',
 };
 
 const state = {
@@ -68,6 +69,68 @@ function showView(name) {
   $('#sidebar').classList.remove('open');
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (name === 'audit') renderAudit();
+  if (name === 'phone-privacy') renderPhonePrivacy();
+}
+
+/* ── Phone Privacy Upgrade ─────────────────────────────────────── */
+async function renderPhonePrivacy() {
+  const [summary, discovery] = await Promise.all([
+    api('/api/summary').catch(() => null),
+    api('/api/discovery/status').catch(() => null),
+  ]);
+
+  // Phone Number Exposure Finder
+  const expoCount = (summary && summary.exposure_count != null)
+    ? summary.exposure_count
+    : (Array.isArray(state.exposures) ? state.exposures.length : 0);
+  $('#pp-finder-msg').textContent = expoCount
+    ? `${expoCount} exposure signal(s) recorded. Open the Exposure Tracker for the full synthetic demo list.`
+    : 'No exposure signals recorded yet.';
+  $('#pp-finder-badge').textContent = 'DEMO DATA';
+
+  // Public-Web Search
+  const webOk = discovery && discovery.public_web && discovery.public_web.configured;
+  $('#pp-web-badge').textContent = webOk ? 'CONFIGURED' : 'NOT CONFIGURED';
+  $('#pp-web-text').textContent = webOk
+    ? 'Public-web search source is configured. Run an opt-in search from the Exposure Discovery page.'
+    : 'Not configured. Add GOOGLE_CSE_API_KEY and GOOGLE_CSE_CX to enable the Public-Web Search source.';
+
+  // Gmail Registration Evidence
+  const gmailOk = discovery && discovery.gmail && discovery.gmail.configured;
+  $('#pp-gmail-badge').textContent = gmailOk ? 'CONFIGURED' : 'NOT CONFIGURED';
+  $('#pp-gmail-text').textContent = gmailOk
+    ? (discovery.gmail.connected ? 'Gmail connected — registration evidence ready.' : 'Gmail configured but not connected.')
+    : 'Not configured. Add GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_REDIRECT_URI to enable Gmail Registration Evidence.';
+
+  // Public Breach Catalogue
+  const breachOk = discovery && discovery.breach && discovery.breach.configured;
+  $('#pp-breach-badge').textContent = breachOk ? 'CONFIGURED' : 'NOT CONFIGURED';
+  $('#pp-breach-text').textContent = breachOk
+    ? 'Breach catalogue lookup available by email only. It does not identify a specific phone number.'
+    : 'Not configured. Add HIBP_API_KEY to enable the breach catalogue.';
+
+  // Explainable Risk Analysis
+  if (summary) {
+    $('#pp-gauge-score').textContent = summary.risk_score != null ? summary.risk_score : '—';
+    $('#pp-risk-badge').textContent = 'DEMO MODEL';
+    const badge = $('#pp-risk-label-badge');
+    badge.textContent = summary.risk_label || '—';
+    $('#pp-risk-text').textContent = summary.score_note || 'Demo heuristic based on synthetic records only.';
+  }
+
+  // Consent Management
+  const consentCount = Array.isArray(state.consents) ? state.consents.length : 0;
+  $('#pp-consent-count').textContent = consentCount
+    ? `${consentCount} consent record(s) on file.`
+    : 'No consent records yet.';
+  $('#pp-consent-badge').textContent = 'LOCAL';
+
+  // Privacy Request Center
+  const draftCount = (Array.isArray(state.requests) ? state.requests : []).filter(r => r && r.status === 'draft').length;
+  $('#pp-requests-count').textContent = draftCount
+    ? `${draftCount} draft request(s) ready for review.`
+    : 'No draft requests yet.';
+  $('#pp-requests-badge').textContent = 'DRAFTS';
 }
 
 /* ── Load all data ───────────────────────────────────────────────── */
