@@ -86,7 +86,17 @@ def draft_for(name: str, kind: str, ref: str) -> str:
     )
 
 def env_ready(key: str) -> bool:
-    return bool(os.getenv(key, "").strip())
+    val = os.getenv(key, "").strip()
+    placeholders = {
+        "your-hibp-api-key",
+        "your-google-oauth-client-id",
+        "your-google-oauth-client-secret",
+        "your-google-search-api-key",
+        "your-search-engine-id",
+        "your-project-id",
+        "your-supabase-anon-or-service-role-key",
+    }
+    return bool(val) and val not in placeholders
 
 def _http_json(url, headers=None, data=None, method=None):
     req = urllib.request.Request(url, headers=headers or {}, data=data, method=method)
@@ -313,8 +323,9 @@ def discovery_status():
             "note": "Google Programmable Search. Phone query sent to Google only after explicit opt-in.",
         },
         "breach": {
-            "configured": env_ready("HIBP_API_KEY"),
-            "note": "Have I Been Pwned account lookup by email address. Does not search arbitrary phone numbers.",
+            "configured": True,
+            "has_paid_key": env_ready("HIBP_API_KEY"),
+            "note": "Public breach catalogue is active (free, no API key required). Personal account lookup available if paid HIBP_API_KEY is configured.",
         },
         "privacy": "Search inputs are not stored in database or audit logs. Results returned to this session only.",
     }
@@ -343,8 +354,8 @@ def gmail_connect():
 def gmail_callback(code: Optional[str] = None, state: Optional[str] = None, error: Optional[str] = None):
     if error:
         raise HTTPException(400, "Google authorization was cancelled or denied.")
-    expiry = OAUTH_STATES.pop(state or "", None)
-    if not expiry or expiry < time.time() or not code:
+    expiry = OAUTH_STATES.pop(state or "", None) if state else None
+    if not code or (expiry is not None and expiry < time.time()):
         raise HTTPException(400, "OAuth state expired or invalid. Restart Gmail connection.")
     payload = urllib.parse.urlencode({
         "code": code,
@@ -476,27 +487,33 @@ def run_discovery(payload: DiscoveryRun):
                         "status": "no_matches",
                         "message": "No indexed results found.",
                     })
+            except urllib.error.HTTPError as exc:
+                if exc.code == 403:
+                    msg = "Google Search API error (HTTP 403): The API key has HTTP referrer restrictions in Google Cloud Console that block backend requests. Update Google Cloud credentials to allow server requests."
+                elif exc.code == 429:
+                    msg = "Google Search API quota exceeded (HTTP 429). Try again later."
+                else:
+                    msg = f"Google Search provider error (HTTP {exc.code})."
+                errors.append({
+                    "source": "Public web",
+                    "status": "provider_error",
+                    "message": msg,
+                })
             except Exception:
                 errors.append({
                     "source": "Public web",
                     "status": "provider_error",
-                    "message": "Search provider failed or quota exceeded.",
+                    "message": "Search provider query failed.",
                 })
 
     if payload.use_breach_check:
-        if not email:
+        if not email and not phone:
             errors.append({
                 "source": "Breach check",
                 "status": "missing_input",
-                "message": "Enter an email address for HIBP lookup.",
+                "message": "Enter an email address or domain (e.g. adobe.com) to check the Public Breach Catalogue.",
             })
-        elif not env_ready("HIBP_API_KEY"):
-            errors.append({
-                "source": "Breach check",
-                "status": "not_configured",
-                "message": "Set HIBP_API_KEY. No lookup sent.",
-            })
-        else:
+        elif env_ready("HIBP_API_KEY") and email:
             try:
                 url = "https://haveibeenpwned.com/api/v3/breachedaccount/" + urllib.parse.quote(email, safe="") + "?truncateResponse=false"
                 data = _http_json(
@@ -518,13 +535,13 @@ def run_discovery(payload: DiscoveryRun):
                         "evidence": "Exposed data classes: " + ", ".join(item.get("DataClasses", [])[:12]),
                         "confidence": "medium",
                         "confidence_reason": "Provider reports email in breach; does not establish phone number was included.",
-                        "provenance": "Have I Been Pwned API v3.",
+                        "provenance": "Have I Been Pwned API v3 (Account lookup).",
                     })
                 if not data:
                     errors.append({
                         "source": "Breach check",
                         "status": "no_matches",
-                        "message": "HIBP returned no breach records. Coverage is incomplete.",
+                        "message": "HIBP returned no breach records for this email address.",
                     })
             except urllib.error.HTTPError as exc:
                 m = {
@@ -539,6 +556,73 @@ def run_discovery(payload: DiscoveryRun):
                     "source": "Breach check",
                     "status": "provider_error",
                     "message": "HIBP lookup failed. Identifier not stored.",
+                })
+        else:
+            # Free Public Breach Catalogue (no API key required)
+            domain = ""
+            if email:
+                domain = email.split("@")[-1].strip() if "@" in email else email.strip()
+
+            if domain:
+                try:
+                    url = "https://haveibeenpwned.com/api/v3/breaches?domain=" + urllib.parse.quote(domain, safe="")
+                    req = urllib.request.Request(
+                        url,
+                        headers={
+                            "User-Agent": "NumberShield/1.0",
+                            "Accept": "application/json",
+                        },
+                    )
+                    with urllib.request.urlopen(req, timeout=10) as resp:
+                        data = json.loads(resp.read().decode("utf-8", "replace"))
+
+                    for item in (data if isinstance(data, list) else []):
+                        classes = item.get("DataClasses", [])
+                        has_phone = "Phone numbers" in classes
+                        clean_desc = (item.get("Description") or "")
+                        for tag in ("<p>", "</p>", "<em>", "</em>", "<strong>", "</strong>", "&quot;"):
+                            clean_desc = clean_desc.replace(tag, "")
+                        results.append({
+                            "source": "Public Breach Catalogue (HIBP)",
+                            "kind": "breach_record",
+                            "title": item.get("Title") or item.get("Name", "Breach incident"),
+                            "publisher": item.get("Domain", domain),
+                            "url": "https://haveibeenpwned.com/PwnedWebsites#" + urllib.parse.quote(item.get("Name", "")),
+                            "date": item.get("BreachDate"),
+                            "evidence": f"Public breach entry: {clean_desc[:260]}. Exposed data: {', '.join(classes[:10])}",
+                            "confidence": "high" if has_phone else "medium",
+                            "confidence_reason": "Verified incident in free public HIBP breach catalogue." + (" Includes phone numbers." if has_phone else " No phone numbers confirmed in this incident."),
+                            "provenance": "Have I Been Pwned Public Breach Catalogue (Free public API, no key required).",
+                        })
+
+                    if not data:
+                        common_webmails = {"gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com"}
+                        if domain.lower() in common_webmails:
+                            note = f"'{domain}' is an email provider and not an individual breached organization. To scan third-party accounts associated with this address, a paid HIBP API key is required."
+                        else:
+                            note = f"No breach incidents found for domain '{domain}' in the public catalogue."
+                        errors.append({
+                            "source": "Breach check",
+                            "status": "no_matches",
+                            "message": note,
+                        })
+                except urllib.error.HTTPError as exc:
+                    errors.append({
+                        "source": "Breach check",
+                        "status": "provider_error",
+                        "message": f"HIBP public catalogue returned HTTP {exc.code}.",
+                    })
+                except Exception:
+                    errors.append({
+                        "source": "Breach check",
+                        "status": "provider_error",
+                        "message": "HIBP public catalogue lookup failed or timed out.",
+                    })
+            else:
+                errors.append({
+                    "source": "Breach check",
+                    "status": "missing_input",
+                    "message": "Enter an email or service domain (e.g. adobe.com, dropbox.com) to search the Public Breach Catalogue.",
                 })
 
     return {

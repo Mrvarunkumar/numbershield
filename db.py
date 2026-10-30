@@ -12,6 +12,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from dotenv import load_dotenv
+
+ROOT = Path(__file__).resolve().parent.parent
+load_dotenv()
+load_dotenv(ROOT / ".env")
+load_dotenv(Path(__file__).resolve().parent / ".env")
+
 logger = logging.getLogger("numbershield.db")
 
 def now() -> str:
@@ -345,7 +352,7 @@ class SupabaseClientDB:
         drafts_res = self.client.table("privacy_requests").select("id", count="exact").eq("status", "draft").execute()
         drafts_count = drafts_res.count if hasattr(drafts_res, "count") and drafts_res.count is not None else len(drafts_res.data or [])
         total_reqs_res = self.client.table("privacy_requests").select("id", count="exact").execute()
-        total_reqs = total_reqs_res.count if hasattr(total_reqs, "count") and total_reqs_res.count is not None else len(total_reqs_res.data or [])
+        total_reqs = total_reqs_res.count if hasattr(total_reqs_res, "count") and total_reqs_res.count is not None else len(total_reqs_res.data or [])
         audit_res = self.client.table("audit_logs").select("id", count="exact").execute()
         audit_count = audit_res.count if hasattr(audit_res, "count") and audit_res.count is not None else len(audit_res.data or [])
 
@@ -606,4 +613,7 @@ def get_db():
     return _DB_INSTANCE
 
 def get_db_mode() -> str:
+    global _DB_INSTANCE, _DB_MODE
+    if _DB_INSTANCE is None:
+        get_db()
     return _DB_MODE

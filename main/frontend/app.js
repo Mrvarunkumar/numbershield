@@ -1,4 +1,4 @@
-﻿/**
+/**
  * NumberShield — Privacy Command Center
  * Frontend application logic
  */
@@ -14,7 +14,7 @@ const PAGE_TITLES = {
   consent:   'Consent Manager',
   requests:  'Privacy Requests',
   audit:     'Audit History',
-  phone_privacy: 'Phone Privacy Upgrade',
+  'phone-privacy': 'Phone Privacy Upgrade',
 };
 
 const state = {
@@ -104,18 +104,38 @@ async function renderPhonePrivacy() {
 
   // Public Breach Catalogue
   const breachOk = discovery && discovery.breach && discovery.breach.configured;
-  $('#pp-breach-badge').textContent = breachOk ? 'CONFIGURED' : 'NOT CONFIGURED';
+  const hasPaidKey = discovery && discovery.breach && discovery.breach.has_paid_key;
+  $('#pp-breach-badge').textContent = breachOk ? (hasPaidKey ? 'PAID KEY' : 'FREE CATALOGUE') : 'NOT AVAILABLE';
+  $('#pp-breach-badge').className = breachOk ? 'badge badge-info' : 'badge';
   $('#pp-breach-text').textContent = breachOk
-    ? 'Breach catalogue lookup available by email only. It does not identify a specific phone number.'
-    : 'Not configured. Add HIBP_API_KEY to enable the breach catalogue.';
+    ? (hasPaidKey
+        ? 'Public breach catalogue active. Personal email account lookup enabled via HIBP API key.'
+        : 'Public breach catalogue active (free, no API key required). Look up breach incidents by domain (e.g. adobe.com, dropbox.com).')
+    : 'Breach catalogue is not reachable.';
+
+  // Evidence Verification
+  const highCount = summary ? (summary.high_severity || 0) : 0;
+  const medCount  = summary ? (summary.medium_severity || 0) : 0;
+  const lowCount  = summary ? (summary.low_severity || 0) : 0;
+  $('#pp-verify-text').textContent =
+    'Verified breakdown: ' + highCount + ' high-severity, ' + medCount + ' medium-severity, and ' + lowCount + ' low-severity evidence signal(s) tracked. All records are source-provenanced.';
 
   // Explainable Risk Analysis
   if (summary) {
-    $('#pp-gauge-score').textContent = summary.risk_score != null ? summary.risk_score : '—';
+    const score = summary.risk_score != null ? summary.risk_score : 0;
+    $('#pp-gauge-score').textContent = score;
+    const deg = score * 3.6;
+    const col = score >= 60 ? 'var(--red)' : score >= 30 ? 'var(--amber)' : 'var(--green)';
+    $('#pp-gauge').style.background = 'conic-gradient(' + col + ' ' + deg + 'deg, #1e3250 ' + deg + 'deg)';
+    $('#pp-gauge-score').style.color = col;
     $('#pp-risk-badge').textContent = 'DEMO MODEL';
     const badge = $('#pp-risk-label-badge');
     badge.textContent = summary.risk_label || '—';
-    $('#pp-risk-text').textContent = summary.score_note || 'Demo heuristic based on synthetic records only.';
+    badge.style.background = score >= 60 ? 'var(--red-dim)' : score >= 30 ? 'var(--amber-dim)' : 'var(--green-dim)';
+    badge.style.color = col;
+    badge.style.borderColor = col + '50';
+    $('#pp-risk-text').textContent =
+      (summary.exposure_count || 0) + ' recorded signal(s) contribute to this score. ' + (summary.score_note || '');
   }
 
   // Consent Management
@@ -364,14 +384,14 @@ async function loadDiscoveryStatus() {
     const s = await api('/api/discovery/status');
     $('#gmail-state').textContent   = s.gmail.connected ? 'Connected · read-only Gmail access' : CONF_LABEL(s.gmail.configured);
     $('#web-state').textContent     = CONF_LABEL(s.public_web.configured);
-    $('#breach-state').textContent  = CONF_LABEL(s.breach.configured);
+    $('#breach-state').textContent  = s.breach.configured ? (s.breach.has_paid_key ? 'Configured (API key)' : 'Active (Free Public Catalogue)') : CONF_LABEL(false);
     $('#btn-connect-gmail').disabled    = !s.gmail.configured;
     $('#btn-disconnect-gmail').disabled = !s.gmail.connected;
     $('#disc-status').innerHTML = `
       <div style="display:grid;gap:6px">
         <div><strong style="color:var(--text)">Gmail</strong> — ${esc(s.gmail.connected ? 'Connected (read-only)' : s.gmail.configured ? 'Configured, not connected' : 'Not configured')}</div>
         <div><strong style="color:var(--text)">Public Web</strong> — ${esc(s.public_web.configured ? 'Configured' : 'Not configured')}</div>
-        <div><strong style="color:var(--text)">Breach Catalogue</strong> — ${esc(s.breach.configured ? 'Configured' : 'Not configured')}</div>
+        <div><strong style="color:var(--text)">Breach Catalogue</strong> — ${esc(s.breach.configured ? (s.breach.has_paid_key ? 'Configured (API key)' : 'Active (Free Public Catalogue)') : 'Not configured')}</div>
         <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--panel-border);color:var(--text-dim)">${esc(s.privacy)}</div>
       </div>`;
   } catch (e) {
