@@ -1,102 +1,100 @@
-# NumberShield — Privacy Intelligence Platform
+# NumberShield 2.0 — Privacy-First Public Digital Exposure Checker
 
-NumberShield is a privacy intelligence and personal data exposure management dashboard. It helps users discover, audit, and take action on how their phone number and personal contact identifiers are exposed across digital services.
+> **"Your Digital Exposure. Your Privacy. Your Control."**
+> **Core Principle:** VERIFY OWNERSHIP BEFORE ACCESS. NEVER TRUST AN EMAIL ADDRESS ALONE. NEVER EXPOSE PRIVATE USER INFORMATION.
 
----
-
-## Key Features
-
-- **Personal Exposure Dashboard**: Visual risk score, breakdown of exposed services by severity (Low / Medium / High).
-- **Consent Tracking & Management**: View and modify consent status (Allowed, Denied, Withdrawn) for tracked services.
-- **Privacy Request Generator**: Generate standard data erasure (GDPR Art. 17 / CCPA), consent withdrawal, and data subject access request (DSAR) letters.
-- **Audit Trail**: Real-time audit logging of all privacy updates and drafted requests.
-- **Privacy Discovery**:
-  - **Have I Been Pwned Integration**: Public breach catalogue search (free, no API key required) and account breach lookups.
-  - **Google Web Search**: Custom Search Engine query to detect public indexing of contact numbers.
-  - **Gmail Evidence Scan**: Read-only OAuth check for service registrations and confirmation emails.
+NumberShield 2.0 is a privacy-first, evidence-based exposure defense platform. It protects user identity with passwordless authentication, strict session isolation, and automatic data destruction — operating with **zero permanent personal databases**.
 
 ---
 
-## Architecture: Zero External Database Needed
+## 1. Core Security Architecture
 
-NumberShield runs entirely with an **in-memory storage engine**:
-
-- **No Database Setup**: No need to configure PostgreSQL, Supabase, SQLite, or cloud credentials.
-- **Privacy by Design**: Data lives strictly in the server process memory and is never persisted to disk.
-- **Auto-Cleanup (TTL)**: Data automatically resets to demo defaults after 30 minutes of inactivity.
-- **Restart Reset**: Every time the server restarts, state cleanly reinitializes.
+1. **No Unauthorized Private Gmail or Google Access**:
+   - Mailbox reading (`gmail.readonly`) is permanently removed and prohibited by architecture.
+   - Google Sign-In is restricted strictly to OpenID Connect (`openid email profile`) for authentication only.
+2. **Passwordless Authentication**:
+   - Single-use 6-digit Email OTP with cryptographic salting (SHA-256).
+   - 5-minute expiration, max 3 verification attempts, brute-force lockout.
+   - Zero application passwords stored anywhere.
+3. **Strict Session Isolation (Person A vs Person B Protection)**:
+   - Cryptographically random 256-bit session tokens in `HttpOnly`, `SameSite=Lax` cookies.
+   - Person B entering Person A's email can never access Person A's session or scans without proving ownership.
+   - IDOR defense: scan results are accessible only by the owning session.
+4. **Zero Permanent Personal Data**:
+   - No PostgreSQL, no Supabase, no SQLite, no persistent database.
+   - All state is held in ephemeral server-side memory.
+5. **Automatic Data Destruction**:
+   - OTP codes: auto-purged after 5 minutes.
+   - Inactive sessions: auto-purged after 30 minutes.
+   - Ephemeral scan results: auto-purged after 15 minutes.
+   - Continuous background sweep daemon runs every 30 seconds.
+6. **Public Digital Exposure Search Only**:
+   - Queries verified public sources: Have I Been Pwned Public Incident Catalogue & Google Programmable Search.
+   - Findings classified as: `VERIFIED PUBLIC INFORMATION`, `UNVERIFIED INFORMATION`, `NO PUBLIC RESULTS FOUND`, `SOURCE UNAVAILABLE`, `SEARCH FAILED`.
+   - Local report export streamed directly; never permanently saved on the server.
+7. **Privacy Audit Dashboard**:
+   - Real-time administrative security monitor with zero PII exposure.
+   - Live automated self-tests verifying session isolation, single-use OTPs, and brute-force defenses.
 
 ---
 
-## Project Structure
+## 2. Project Layout
 
 ```
 numbershield/
-│
-├── backend/                  # FastAPI Backend API
+├── backend/
 │   ├── __init__.py
-│   ├── main.py              # Application routes & middleware
-│   └── db.py                # In-memory storage engine with TTL auto-cleanup
-│
-├── frontend/                 # Web Interface
-│   ├── index.html           # Single-page dashboard
-│   ├── app.js               # Frontend application logic
-│   └── style.css            # Custom styles & dark theme
-│
-├── .env.example             # Optional API keys template (Gmail, Google CSE, HIBP)
-├── .gitignore               # Git ignore rules
-├── README.md                # Project documentation
-├── requirements.txt         # Python dependencies
-├── run.bat                  # One-click startup for Windows Command Prompt
-└── run.ps1                  # Startup script for PowerShell
+│   ├── main.py                   # FastAPI routes, security headers, middleware
+│   ├── security.py               # OTP manager, session isolator, rate limiter, audit engine
+│   ├── db.py                     # Ephemeral in-memory store with session scoping
+│   └── test_security_suite.py    # 25-criteria automated security test suite
+├── frontend/
+│   ├── index.html                # Single-page application UI with auth modal & audit view
+│   ├── app.js                    # Controller logic, OTP flows, local report export
+│   └── style.css                 # Cyber-defense dark theme & security widgets
+├── .env.example                  # Environment configuration template
+├── .gitignore                    # Git rules (excludes .env and secrets)
+├── README.md                     # Documentation
+├── requirements.txt              # Core dependencies
+├── run.bat                       # One-click startup for Windows Command Prompt
+└── run.ps1                       # Startup script for PowerShell
 ```
 
 ---
 
-## Quick Start
+## 3. Quick Start
 
 ### 1. Install Dependencies
-
-Ensure Python 3.9+ is installed:
-
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 2. Run the Application
-
-**Option A (Windows batch):**
-Double-click `run.bat` or run:
-```cmd
-run.bat
-```
-
-**Option B (PowerShell):**
-```powershell
-.\run.ps1
-```
-
-**Option C (Direct Uvicorn command):**
-```bash
-uvicorn backend.main:app --reload
-```
+- **Windows Command Prompt:**
+  ```cmd
+  run.bat
+  ```
+- **PowerShell:**
+  ```powershell
+  .\run.ps1
+  ```
+- **Direct Uvicorn:**
+  ```bash
+  uvicorn backend.main:app --reload
+  ```
 
 ### 3. Open in Browser
-
-Open your browser and navigate to:
-```
-http://127.0.0.1:8000
-```
-
-- **Interactive API Docs (Swagger)**: [http://127.0.0.1:8000/api/docs](http://127.0.0.1:8000/api/docs)
-- **Alternative Docs (ReDoc)**: [http://127.0.0.1:8000/api/redoc](http://127.0.0.1:8000/api/redoc)
+- **Application:** [http://127.0.0.1:8000](http://127.0.0.1:8000)
+- **Interactive OpenAPI Documentation:** [http://127.0.0.1:8000/api/docs](http://127.0.0.1:8000/api/docs)
+- **Privacy Audit Dashboard:** Navigate to the **Security Audit** tab in the sidebar.
 
 ---
 
-## Optional Integrations
+## 4. Automated Security Verification
 
-All core features work immediately out-of-the-box without any `.env` file. If you wish to enable third-party discovery providers, copy `.env.example` to `.env` and fill in the optional keys:
+To run the complete 25-criteria automated security verification test suite:
 
-- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`: For Gmail OAuth discovery
-- `GOOGLE_CSE_API_KEY` / `GOOGLE_CSE_CX`: For Google Custom Search lookup
-- `HIBP_API_KEY`: For Have I Been Pwned personal account breach lookup
+```bash
+python -m unittest backend.test_security_suite -v
+```
+All tests execute deterministically in memory in < 0.2 seconds.

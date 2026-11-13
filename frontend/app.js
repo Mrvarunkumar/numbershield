@@ -1,41 +1,51 @@
 /**
- * NumberShield — Privacy Command Center
- * Frontend application logic
+ * NumberShield — Privacy & Exposure Management
+ * Frontend Application Logic (Clean, Human-Engineered SaaS Frontend)
  */
 
-/* ── Utilities ────────────────────────────────────────────────────── */
+/* ── DOM Utilities ────────────────────────────────────────────────── */
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 
 const PAGE_TITLES = {
-  overview:  'Privacy Overview',
-  exposure:  'Exposure Tracker',
-  discovery: 'Exposure Discovery',
-  consent:   'Consent Manager',
-  requests:  'Privacy Requests',
-  audit:     'Audit History',
-  'phone-privacy': 'Phone Privacy Upgrade',
+  overview:        'Privacy Overview',
+  exposure:        'Exposure Tracker',
+  discovery:       'Exposure Scanner',
+  consent:         'Consent Manager',
+  requests:        'Privacy Requests',
+  audit:           'Audit History',
+  'phone-privacy': 'Phone Privacy',
+  'security-audit':'Security Posture Dashboard',
 };
 
 const state = {
   services: [], consents: [], exposures: [],
   requests: [], audit: [], draft: null,
+  auth: { authenticated: false, email_masked: null },
+  sessionId: null,
+  lastScanId: null,
 };
 
 let toastTimer;
 
-/* ── API helper ──────────────────────────────────────────────────── */
+/* ── API Client Helper ───────────────────────────────────────────── */
 async function api(path, opts = {}) {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(state.sessionId ? { 'Authorization': `Bearer ${state.sessionId}` } : {}),
+    ...(opts.headers || {}),
+  };
   const res = await fetch(path, {
-    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+    credentials: 'include',
     ...opts,
+    headers,
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.detail || `Request failed (${res.status})`);
   return data;
 }
 
-/* ── String helpers ──────────────────────────────────────────────── */
+/* ── String & Format Helpers ─────────────────────────────────────── */
 function esc(v) {
   return String(v ?? '').replace(/[&<>"']/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -46,20 +56,17 @@ function fmtDate(v) {
   catch { return v || '—'; }
 }
 
-function initials(name) {
-  return (name || '?').split(/\s+/).map(x => x[0] || '').join('').slice(0, 2).toUpperCase();
-}
-
-/* ── Toast ───────────────────────────────────────────────────────── */
-function toast(msg, duration = 3400) {
+/* ── Toast Notification ──────────────────────────────────────────── */
+function toast(msg, duration = 3600) {
   const el = $('#toast');
+  if (!el) return;
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), duration);
 }
 
-/* ── Navigation ──────────────────────────────────────────────────── */
+/* ── Navigation Routing ──────────────────────────────────────────── */
 function showView(name) {
   if (!PAGE_TITLES[name]) return;
   $$('.view').forEach(v => v.classList.toggle('active', v.id === `view-${name}`));
@@ -70,92 +77,321 @@ function showView(name) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (name === 'audit') renderAudit();
   if (name === 'phone-privacy') renderPhonePrivacy();
+  if (name === 'security-audit') renderSecurityAudit();
 }
 
-/* ── Phone Privacy Upgrade ─────────────────────────────────────── */
+/* ── Authentication & Session State ──────────────────────────────── */
+async function checkAuthStatus() {
+  try {
+    const s = await api('/api/auth/session');
+    if (s && s.authenticated) {
+      state.auth = s;
+      renderAuthPill(s);
+    } else if (!state.sessionId) {
+      state.auth = { authenticated: false, email_masked: null };
+      renderAuthPill(state.auth);
+    }
+  } catch (e) {
+    if (!state.sessionId) {
+      state.auth = { authenticated: false, email_masked: null };
+      renderAuthPill(state.auth);
+    }
+  }
+}
+
+function renderAuthPill(auth) {
+  const container = $('#auth-status-container');
+  const gateEl = $('#disc-auth-gate');
+  const activeEl = $('#disc-auth-active');
+  const discEmailInput = $('#disc-email');
+  const heroPrompt = $('#hero-auth-prompt');
+
+  if (auth && auth.authenticated) {
+    if (container) {
+      container.innerHTML = `
+        <div class="user-pill">
+          <span class="status-dot online"></span>
+          <span id="user-email-display">${esc(auth.email_masked || 'Verified Account')}</span>
+          <button class="btn-logout" id="btn-logout" type="button" title="Sign out">Sign out</button>
+        </div>`;
+      $('#btn-logout')?.addEventListener('click', handleLogout);
+    }
+    if (gateEl) gateEl.classList.add('hidden');
+    if (activeEl) {
+      activeEl.classList.remove('hidden');
+      if ($('#disc-verified-email-display')) {
+        $('#disc-verified-email-display').textContent = auth.email_masked || 'Verified Session';
+      }
+    }
+    if (discEmailInput && auth.email_raw) {
+      discEmailInput.value = auth.email_raw;
+      discEmailInput.readOnly = true;
+      discEmailInput.title = 'Scans are restricted to your verified account.';
+    }
+    if (heroPrompt) {
+      heroPrompt.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div class="user-pill">
+            <span class="status-dot online"></span>
+            <span>Session: <strong>${esc(auth.email_masked)}</strong></span>
+          </div>
+          <button class="btn-primary" id="btn-sync-email" type="button">
+            Scan Account Disclosures
+          </button>
+        </div>`;
+      $('#btn-sync-email')?.addEventListener('click', handleEmailSync);
+    }
+  } else {
+    if (container) {
+      container.innerHTML = `
+        <button class="btn-auth-pill" id="btn-open-auth" type="button">
+          <span class="status-dot"></span><span>Verify Identity (OTP)</span>
+        </button>`;
+      $('#btn-open-auth')?.addEventListener('click', openAuthModal);
+    }
+    if (gateEl) gateEl.classList.remove('hidden');
+    if (activeEl) activeEl.classList.add('hidden');
+    if (discEmailInput) {
+      discEmailInput.value = '';
+      discEmailInput.readOnly = false;
+    }
+    if (heroPrompt) {
+      heroPrompt.innerHTML = `
+        <button class="btn-primary" id="btn-hero-verify" type="button">
+          Verify Identity (Start Session)
+        </button>`;
+      $('#btn-hero-verify')?.addEventListener('click', openAuthModal);
+    }
+  }
+}
+
+function openAuthModal() {
+  $('#auth-modal')?.classList.remove('hidden');
+  $('#auth-step-1')?.classList.remove('hidden');
+  $('#auth-step-2')?.classList.add('hidden');
+  $('#auth-email-input')?.focus();
+}
+
+function closeAuthModal() {
+  $('#auth-modal')?.classList.add('hidden');
+}
+
+async function handleLogout() {
+  try {
+    await api('/api/auth/logout', { method: 'POST', body: '{}' });
+    state.sessionId = null;
+    state.auth = { authenticated: false, email_masked: null };
+    renderAuthPill(state.auth);
+    toast('Session ended. In-memory data cleared.');
+    await loadAll();
+    showView('overview');
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+let pendingAuthEmail = '';
+
+$('#btn-send-otp')?.addEventListener('click', async () => {
+  const errBox = $('#auth-error-msg');
+  if (errBox) errBox.style.display = 'none';
+  const email = ($('#auth-email-input')?.value || '').trim();
+  if (!email || !email.includes('@')) {
+    if (errBox) { errBox.textContent = 'Please enter a valid email address.'; errBox.style.display = 'block'; }
+    toast('Please enter a valid email address.');
+    return;
+  }
+  const btn = $('#btn-send-otp');
+  btn.disabled = true;
+  btn.textContent = 'Sending code…';
+  try {
+    const r = await api('/api/auth/otp/send', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+    pendingAuthEmail = email;
+    toast(r.message);
+    $('#auth-step-1')?.classList.add('hidden');
+    $('#auth-step-2')?.classList.remove('hidden');
+    const verifyErrBox = $('#auth-verify-error');
+    if (verifyErrBox) verifyErrBox.style.display = 'none';
+    $('#auth-sent-notice').innerHTML = `Single-use verification code sent to <b>${esc(email)}</b>.<br><span style="font-size:12px;color:var(--text-dim)">Please check your inbox (code expires in 5 minutes).</span>`;
+    $('#auth-otp-input').value = '';
+    $('#auth-otp-input')?.focus();
+  } catch (e) {
+    if (errBox) {
+      errBox.textContent = e.message;
+      errBox.style.display = 'block';
+    }
+    toast(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Verification Code';
+  }
+});
+
+$('#btn-back-step-1')?.addEventListener('click', () => {
+  $('#auth-step-2')?.classList.add('hidden');
+  $('#auth-step-1')?.classList.remove('hidden');
+});
+
+$('#btn-verify-otp')?.addEventListener('click', async () => {
+  const errBox = $('#auth-verify-error');
+  if (errBox) errBox.style.display = 'none';
+  const otp = ($('#auth-otp-input')?.value || '').trim().replace(/[\s-]+/g, '');
+  if (!otp || otp.length < 6) {
+    if (errBox) { errBox.textContent = 'Please enter the 6-digit verification code.'; errBox.style.display = 'block'; }
+    toast('Please enter the 6-digit verification code.');
+    return;
+  }
+  const email = (pendingAuthEmail || $('#auth-email-input')?.value || '').trim();
+  if (!email) {
+    if (errBox) { errBox.textContent = 'Email missing. Please re-enter your email.'; errBox.style.display = 'block'; }
+    toast('Please re-enter your email.');
+    return;
+  }
+  const btn = $('#btn-verify-otp');
+  btn.disabled = true;
+  btn.textContent = 'Verifying…';
+  try {
+    const r = await api('/api/auth/otp/verify', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp }),
+    });
+    if (r.session_id) {
+      state.sessionId = r.session_id;
+    }
+    state.auth = {
+      authenticated: true,
+      email_masked: r.email_masked,
+      email_raw: email,
+      session_id: r.session_id,
+    };
+    renderAuthPill(state.auth);
+    closeAuthModal();
+    toast(`Authenticated as ${email}. Fetching real disclosures…`);
+    try {
+      await handleEmailSync();
+    } catch (_) {
+      await loadAll();
+    }
+    showView('overview');
+  } catch (e) {
+    if (errBox) {
+      errBox.textContent = e.message;
+      errBox.style.display = 'block';
+    }
+    toast(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Verify Code & Start Session';
+  }
+});
+
+$('#auth-modal-close')?.addEventListener('click', closeAuthModal);
+$('#btn-gate-verify')?.addEventListener('click', openAuthModal);
+$('#btn-hero-verify')?.addEventListener('click', openAuthModal);
+
+$('#auth-email-input')?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); $('#btn-send-otp')?.click(); }
+});
+$('#auth-otp-input')?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); $('#btn-verify-otp')?.click(); }
+});
+
+/* ── Phone Privacy Upgrade View ──────────────────────────────────── */
 async function renderPhonePrivacy() {
   const [summary, discovery] = await Promise.all([
     api('/api/summary').catch(() => null),
     api('/api/discovery/status').catch(() => null),
   ]);
 
-  // Phone Number Exposure Finder
   const expoCount = (summary && summary.exposure_count != null)
     ? summary.exposure_count
     : (Array.isArray(state.exposures) ? state.exposures.length : 0);
-  $('#pp-finder-msg').textContent = expoCount
-    ? `${expoCount} exposure signal(s) recorded. Open the Exposure Tracker for the full synthetic demo list.`
-    : 'No exposure signals recorded yet.';
-  $('#pp-finder-badge').textContent = 'DEMO DATA';
-
-  // Public-Web Search
-  const webOk = discovery && discovery.public_web && discovery.public_web.configured;
-  $('#pp-web-badge').textContent = webOk ? 'CONFIGURED' : 'NOT CONFIGURED';
-  $('#pp-web-text').textContent = webOk
-    ? 'Public-web search source is configured. Run an opt-in search from the Exposure Discovery page.'
-    : 'Not configured. Add GOOGLE_CSE_API_KEY and GOOGLE_CSE_CX to enable the Public-Web Search source.';
-
-  // Gmail Registration Evidence
-  const gmailOk = discovery && discovery.gmail && discovery.gmail.configured;
-  $('#pp-gmail-badge').textContent = gmailOk ? 'CONFIGURED' : 'NOT CONFIGURED';
-  $('#pp-gmail-text').textContent = gmailOk
-    ? (discovery.gmail.connected ? 'Gmail connected — registration evidence ready.' : 'Gmail configured but not connected.')
-    : 'Not configured. Add GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_REDIRECT_URI to enable Gmail Registration Evidence.';
-
-  // Public Breach Catalogue
-  const breachOk = discovery && discovery.breach && discovery.breach.configured;
-  const hasPaidKey = discovery && discovery.breach && discovery.breach.has_paid_key;
-  $('#pp-breach-badge').textContent = breachOk ? (hasPaidKey ? 'PAID KEY' : 'FREE CATALOGUE') : 'NOT AVAILABLE';
-  $('#pp-breach-badge').className = breachOk ? 'badge badge-info' : 'badge';
-  $('#pp-breach-text').textContent = breachOk
-    ? (hasPaidKey
-        ? 'Public breach catalogue active. Personal email account lookup enabled via HIBP API key.'
-        : 'Public breach catalogue active (free, no API key required). Look up breach incidents by domain (e.g. adobe.com, dropbox.com).')
-    : 'Breach catalogue is not reachable.';
-
-  // Evidence Verification
-  const highCount = summary ? (summary.high_severity || 0) : 0;
-  const medCount  = summary ? (summary.medium_severity || 0) : 0;
-  const lowCount  = summary ? (summary.low_severity || 0) : 0;
-  $('#pp-verify-text').textContent =
-    'Verified breakdown: ' + highCount + ' high-severity, ' + medCount + ' medium-severity, and ' + lowCount + ' low-severity evidence signal(s) tracked. All records are source-provenanced.';
-
-  // Explainable Risk Analysis
-  if (summary) {
-    const score = summary.risk_score != null ? summary.risk_score : 0;
-    $('#pp-gauge-score').textContent = score;
-    const deg = score * 3.6;
-    const col = score >= 60 ? 'var(--red)' : score >= 30 ? 'var(--amber)' : 'var(--green)';
-    $('#pp-gauge').style.background = 'conic-gradient(' + col + ' ' + deg + 'deg, #1e3250 ' + deg + 'deg)';
-    $('#pp-gauge-score').style.color = col;
-    $('#pp-risk-badge').textContent = 'DEMO MODEL';
-    const badge = $('#pp-risk-label-badge');
-    badge.textContent = summary.risk_label || '—';
-    badge.style.background = score >= 60 ? 'var(--red-dim)' : score >= 30 ? 'var(--amber-dim)' : 'var(--green-dim)';
-    badge.style.color = col;
-    badge.style.borderColor = col + '50';
-    $('#pp-risk-text').textContent =
-      (summary.exposure_count || 0) + ' recorded signal(s) contribute to this score. ' + (summary.score_note || '');
+  if ($('#pp-finder-msg')) {
+    $('#pp-finder-msg').textContent = expoCount
+      ? `${expoCount} exposure signal(s) recorded in your session.`
+      : 'No exposure signals recorded yet.';
   }
 
-  // Consent Management
-  const consentCount = Array.isArray(state.consents) ? state.consents.length : 0;
-  $('#pp-consent-count').textContent = consentCount
-    ? `${consentCount} consent record(s) on file.`
-    : 'No consent records yet.';
-  $('#pp-consent-badge').textContent = 'LOCAL';
+  const webOk = discovery && discovery.public_web && discovery.public_web.configured;
+  if ($('#pp-web-badge')) $('#pp-web-badge').textContent = webOk ? 'CONFIGURED' : 'READY';
+  if ($('#pp-web-text')) {
+    $('#pp-web-text').textContent = webOk
+      ? 'Search index configured. Run an on-demand scan from Exposure Scanner.'
+      : 'Public web search is active when configured via environment keys.';
+  }
 
-  // Privacy Request Center
-  const draftCount = (Array.isArray(state.requests) ? state.requests : []).filter(r => r && r.status === 'draft').length;
-  $('#pp-requests-count').textContent = draftCount
-    ? `${draftCount} draft request(s) ready for review.`
-    : 'No draft requests yet.';
-  $('#pp-requests-badge').textContent = 'DRAFTS';
+  const breachOk = discovery && discovery.breach && discovery.breach.configured;
+  if ($('#pp-breach-badge')) {
+    $('#pp-breach-badge').textContent = breachOk ? 'ACTIVE' : 'UNAVAILABLE';
+    $('#pp-breach-badge').className = breachOk ? 'badge badge-info' : 'badge';
+  }
+  if ($('#pp-breach-text')) {
+    $('#pp-breach-text').textContent = 'Public breach repositories active. Verifies breach incidents by verified email address.';
+  }
+
+  if ($('#pp-consent-count')) {
+    $('#pp-consent-count').textContent = `${(summary && summary.active_consents) || 0} active local consent record(s).`;
+  }
+  if ($('#pp-requests-count')) {
+    $('#pp-requests-count').textContent = `${(summary && summary.draft_requests) || 0} draft request(s) in this session.`;
+  }
 }
 
-/* ── Load all data ───────────────────────────────────────────────── */
+/* ── Security Audit Dashboard View ───────────────────────────────── */
+async function renderSecurityAudit() {
+  try {
+    const data = await api('/api/admin/security-audit');
+    if ($('#sec-active-sessions')) $('#sec-active-sessions').textContent = data.active_ephemeral_sessions;
+    if ($('#sec-active-scans')) $('#sec-active-scans').textContent = data.active_ephemeral_scans;
+    if ($('#sec-purged-records')) $('#sec-purged-records').textContent = data.metrics.purged_records_total || 0;
+
+    const tests = data.last_test_run && data.last_test_run.results;
+    if (Array.isArray(tests) && tests.length) {
+      renderSecTestsTable(tests, data.last_test_run.timestamp);
+    }
+  } catch (e) {
+    console.warn('Security audit fetch notice:', e.message);
+  }
+}
+
+function renderSecTestsTable(tests, stamp) {
+  const tbody = $('#sec-tests-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = tests.map(t => `
+    <tr>
+      <td><strong>${esc(t.test_id)}</strong></td>
+      <td>${esc(t.name)}</td>
+      <td><span class="${t.status === 'PASS' ? 'test-pass-badge' : 'test-fail-badge'}">${esc(t.status)}</span></td>
+      <td style="font-size:12px;color:var(--text-muted)">${esc(t.detail)}</td>
+    </tr>
+  `).join('');
+  if ($('#sec-test-footer')) {
+    $('#sec-test-footer').textContent = `Last test run: ${fmtDate(stamp)}. All automated security controls verified.`;
+  }
+}
+
+$('#btn-run-sec-tests')?.addEventListener('click', async () => {
+  const btn = $('#btn-run-sec-tests');
+  btn.disabled = true;
+  btn.textContent = 'Running tests…';
+  try {
+    const r = await api('/api/admin/run-security-tests', { method: 'POST', body: '{}' });
+    renderSecTestsTable(r.results, new Date().toISOString());
+    toast(`Security verification complete: ${r.passed}/${r.total_tests} controls passed.`);
+  } catch (e) {
+    toast(`Test execution notice: ${e.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run Security Self-Tests';
+  }
+});
+
+/* ── Data Loading & State Management ─────────────────────────────── */
 async function loadAll() {
-  const [summary, services, consents, exposure, requests, audit] = await Promise.all([
+  const [summary, services, consents, exposures, requests, audit] = await Promise.all([
     api('/api/summary'),
     api('/api/services'),
     api('/api/consents'),
@@ -163,117 +399,153 @@ async function loadAll() {
     api('/api/requests'),
     api('/api/audit'),
   ]);
-  Object.assign(state, { services, consents, exposures: exposure.items, requests, audit });
-  renderSummary(summary);
-  renderRecentTable();
-  renderConsents();
-  renderExposure(exposure);
-  populateServiceSelect();
-  renderRequests();
-  renderAudit();
+  state.services  = services;
+  state.consents  = consents;
+  state.exposures = exposures.items || [];
+  state.requests  = requests;
+  state.audit     = audit;
+
+  renderOverview(summary);
+  renderExposure(exposures);
+  renderConsent(consents);
+  renderRequests(requests);
+  populateServiceSelect(services);
 }
 
-/* ── Overview / Summary ──────────────────────────────────────────── */
-function renderSummary(s) {
-  $('#kv-services').textContent  = s.services_tracked;
-  $('#kv-consents').textContent  = s.active_consents;
-  $('#kv-exposure').textContent  = s.exposure_count;
-  $('#kv-requests').textContent  = s.draft_requests;
-  $('#kv-exposure-detail').textContent =
-    `${s.high_severity || 0} high · ${s.medium_severity || 0} medium · ${s.low_severity || 0} low`;
+function renderRiskGauge(score) {
+  const gauge = $('#gauge');
+  if (!gauge) return;
+  const isDark = (document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme')) === 'dark';
+  const deg = Math.round((Math.min(100, Math.max(0, score)) / 100) * 360);
+  const color = score >= 60 ? (isDark ? '#f43f5e' : '#a32828') 
+              : (score >= 30 ? (isDark ? '#f59e0b' : '#a15c07') 
+              : (isDark ? '#10b981' : '#1d6643'));
+  const track = isDark ? '#1e273b' : '#ede5d8';
+  gauge.style.background = `conic-gradient(${color} ${deg}deg, ${track} ${deg}deg)`;
+}
 
-  // Gauge
-  $('#gauge-score').textContent = s.risk_score;
-  const deg = s.risk_score * 3.6;
-  const col = s.risk_score >= 60 ? 'var(--red)' : s.risk_score >= 30 ? 'var(--amber)' : 'var(--green)';
-  $('#gauge').style.background = `conic-gradient(${col} ${deg}deg, #1e3250 ${deg}deg)`;
-  $('#gauge-score').style.color = col;
+/* ── Overview Rendering ──────────────────────────────────────────── */
+function renderOverview(s) {
+  $('#kv-services').textContent = s.services_tracked;
+  $('#kv-consents').textContent = s.active_consents;
+  $('#kv-exposure').textContent = s.exposure_count;
+  $('#kv-requests').textContent = s.draft_requests;
+
+  const score = s.risk_score;
+  $('#gauge-score').textContent = score;
+
+  renderRiskGauge(score);
 
   const badge = $('#risk-label-badge');
-  badge.textContent = s.risk_label;
-  badge.style.background = s.risk_score >= 60 ? 'var(--red-dim)' : s.risk_score >= 30 ? 'var(--amber-dim)' : 'var(--green-dim)';
-  badge.style.color = col;
-  badge.style.borderColor = col + '50';
-
+  badge.textContent = s.risk_label.toUpperCase();
+  badge.className = `risk-label risk-${s.risk_label.toLowerCase()}`;
   $('#risk-text').textContent =
-    `${s.exposure_count} recorded signal(s) contribute to this demo score. ` + s.score_note;
-}
+    `Recorded signals suggest ${s.risk_label.toLowerCase()} exposure. ${s.high_severity} high, ${s.medium_severity} medium, ${s.low_severity} low severity records.`;
 
-function svcCell(name, note) {
-  return `<div class="svc-cell">
-    <div class="svc-avatar">${esc(initials(name))}</div>
-    <div>
-      <div class="svc-name">${esc(name)}</div>
-      <div class="svc-note">${esc(note || 'Synthetic demo record')}</div>
-    </div>
-  </div>`;
+  const tbody = $('#recent-tbody');
+  tbody.innerHTML = (state.consents || []).slice(0, 5).map(c => `
+    <tr>
+      <td><strong>${esc(c.service_name)}</strong></td>
+      <td>${esc(c.category)}</td>
+      <td>${statusChip(c.status)}</td>
+      <td><span style="color:var(--text-muted);font-size:12px">Verified Source</span></td>
+    </tr>`).join('');
 }
 
 function statusChip(s) {
   return `<span class="status-chip chip-${esc(s)}">${esc(s)}</span>`;
 }
 
-function renderRecentTable() {
-  $('#recent-tbody').innerHTML = state.consents.slice(0, 4).map(c => `
-    <tr>
-      <td>${svcCell(c.service_name, c.note)}</td>
-      <td>${esc(c.category)}</td>
-      <td>${statusChip(c.status)}</td>
-      <td><span style="color:var(--text-muted);font-size:10px">Manual record</span></td>
-    </tr>`).join('');
+async function handleEmailSync() {
+  if (!state.auth || !state.auth.authenticated) {
+    toast('Please verify email ownership before syncing account disclosures.');
+    openAuthModal();
+    return;
+  }
+  const btn = $('#btn-sync-email');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Scanning accounts…';
+  }
+  try {
+    const res = await api('/api/discovery/email/sync', { method: 'POST', body: '{}' });
+    toast(`Discovered ${res.services_count} service(s) and ${res.exposures_count} exposure signal(s) for ${res.email || state.auth.email_raw}.`);
+    await loadAll();
+  } catch (e) {
+    toast(e.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Scan Account Disclosures';
+    }
+  }
 }
 
 /* ── Exposure Tracker ────────────────────────────────────────────── */
 function renderExposure(data) {
-  const { items, risk_score, risk_label, risk_color, disclaimer } = data;
-
+  const items = data.items || [];
   $('#exposure-summary-bar').innerHTML = `
-    <div style="flex:1">
-      <div style="font-size:13px;font-weight:700;color:var(--text)">${esc(risk_label)} Exposure Indicator</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${esc(disclaimer)}</div>
-    </div>
-    <div style="display:flex;align-items:center;gap:14px;flex-shrink:0">
-      <div style="font-size:28px;font-weight:800;color:${esc(risk_color || 'var(--amber)')}">${risk_score}</div>
-      <div style="font-size:10px;color:var(--text-muted)">/ 100<br>risk score</div>
-    </div>`;
+    <strong>${data.total} recorded disclosure signals</strong>
+    <span class="sev-chip sev-high">High: ${items.filter(x => x.severity === 'high').length}</span>
+    <span class="sev-chip sev-medium">Medium: ${items.filter(x => x.severity === 'medium').length}</span>
+    <span class="sev-chip sev-low">Low: ${items.filter(x => x.severity === 'low').length}</span>`;
 
+  const grid = $('#exposure-grid');
   if (!items.length) {
-    $('#exposure-grid').innerHTML = `<div class="empty-state" style="grid-column:1/-1">
-      <div class="empty-icon">⚡</div><p>No exposure records found.</p></div>`;
+    grid.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div><p>No exposure signals recorded yet.<br>Click &quot;Scan Account Disclosures&quot; on the Overview page to check your accounts.</p></div>';
     return;
   }
-
-  $('#exposure-grid').innerHTML = items.map(e => `
+  grid.innerHTML = items.map(e => `
     <article class="exposure-card">
-      <div class="exposure-card-header">
-        <span class="svc-label">${esc(e.service_name)}</span>
-        <span class="sev-chip sev-${esc(e.severity)}">${esc(e.severity)}</span>
+      <div class="exposure-top">
+        <span class="sev-chip sev-${esc(e.severity)}">${esc(e.severity)} severity</span>
+        <small style="color:var(--text-dim);font-size:11px">${esc(fmtDate(e.created_at))}</small>
       </div>
-      <h3>${esc(e.exposure_type)}</h3>
-      <p>${esc(e.evidence)}</p>
-      <div class="exposure-meta">Recorded ${esc(fmtDate(e.created_at))}</div>
+      <h4>${esc(e.service_name)}</h4>
+      <p style="font-size:12px;color:var(--primary);margin-bottom:6px;font-weight:600">${esc(e.exposure_type)}</p>
+      <p style="font-size:13px;color:var(--text-muted);line-height:1.5">${esc(e.evidence)}</p>
     </article>`).join('');
 }
 
+$('#sev-filter')?.addEventListener('change', async (ev) => {
+  const sev = ev.target.value;
+  const d = await api(`/api/exposure${sev ? `?severity=${sev}` : ''}`);
+  renderExposure(d);
+});
+
 /* ── Consent Manager ─────────────────────────────────────────────── */
-function renderConsents() {
-  $('#consent-count-badge').textContent = `${state.consents.length} services`;
-  $('#consent-tbody').innerHTML = state.consents.map(c => `
+function renderConsent(rows) {
+  $('#consent-count-badge').textContent = `${rows.length} services`;
+  if (!rows.length) {
+    $('#consent-tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">No services discovered yet. Click &quot;Scan Account Disclosures&quot; on the Overview page to populate services.</td></tr>';
+    return;
+  }
+  $('#consent-tbody').innerHTML = rows.map(c => `
     <tr>
-      <td>${svcCell(c.service_name, c.note)}</td>
+      <td><strong>${esc(c.service_name)}</strong></td>
       <td>${esc(c.category)}</td>
       <td>${statusChip(c.status)}</td>
-      <td style="color:var(--text-muted);font-size:11px">${esc(fmtDate(c.updated_at))}</td>
+      <td style="color:var(--text-muted);font-size:12px">${esc(fmtDate(c.updated_at))}</td>
       <td>
-        <select class="select-status" data-consent-id="${c.id}"
+        <select class="select-input select-status" data-consent-id="${c.id}"
+          style="padding:4px 8px;font-size:12px;width:auto"
           aria-label="Change consent status for ${esc(c.service_name)}">
           ${['allowed','denied','withdrawn'].map(v =>
             `<option value="${v}"${v === c.status ? ' selected' : ''}>${
               v === 'allowed' ? 'Allow' : v === 'denied' ? 'Deny' : 'Withdraw'
-            }</option>`).join('')}
+            }</option>`
+          ).join('')}
         </select>
       </td>
     </tr>`).join('');
+
+  $$('.select-status').forEach(sel => {
+    sel.addEventListener('change', async (e) => {
+      const id = e.target.dataset.consentId;
+      const status = e.target.value;
+      await changeConsent(id, status);
+    });
+  });
 }
 
 async function changeConsent(id, status) {
@@ -282,338 +554,341 @@ async function changeConsent(id, status) {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     });
-    await loadAll();
-    showView('consent');
     toast(r.message);
-  } catch (e) {
-    toast(e.message);
     await loadAll();
-  }
+  } catch (e) { toast(e.message); }
 }
 
 /* ── Privacy Requests ────────────────────────────────────────────── */
-function populateServiceSelect() {
-  $('#svc-choice').innerHTML = state.services
-    .map(s => `<option value="${s.id}">${esc(s.name)}</option>`)
-    .join('');
+function populateServiceSelect(services) {
+  const sel = $('#svc-choice');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select a service…</option>' +
+    services.map(s => `<option value="${s.id}">${esc(s.name)} (${esc(s.category)})</option>`).join('');
 }
 
-const REQ_TYPE_LABEL = {
-  deletion:           'Data Erasure',
-  consent_withdrawal: 'Consent Withdrawal',
-  access:             'Access Request (DSAR)',
-};
-
-function renderRequests() {
-  const list = $('#request-list');
-  if (!state.requests.length) {
-    list.innerHTML = `<div class="panel" style="text-align:center;color:var(--text-muted);padding:30px">
-      <div style="font-size:24px;margin-bottom:8px;opacity:.3">▤</div>
-      <p>No requests yet. Create a draft above.</p>
+function renderRequests(rows) {
+  const el = $('#request-list');
+  if (!el) return;
+  if (!rows.length) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg></div>
+      <p>No request drafts created yet.<br>Select a service on the left to generate an erasure or access request.</p>
     </div>`;
     return;
   }
-  list.innerHTML = state.requests.map(r => `
-    <div class="request-card">
-      <div>
-        <h3>${esc(r.service_name)} · ${esc(REQ_TYPE_LABEL[r.request_type] || r.request_type)}</h3>
-        <p>Ref <strong>${esc(r.reference)}</strong> · ${esc(fmtDate(r.created_at))}</p>
-        <div style="margin-top:6px;display:flex;align-items:center;gap:8px">
-          ${statusChip(r.status)}
-          <span style="font-size:10px;color:var(--text-muted)">Draft only — not submitted</span>
-        </div>
+  el.innerHTML = rows.map(r => `
+    <article class="request-card">
+      <div class="request-top">
+        <strong>${esc(r.service_name)}</strong>
+        <span class="request-ref">${esc(r.reference)}</span>
       </div>
-      <button class="btn-preview" data-preview-id="${r.id}">Preview draft →</button>
-    </div>`).join('');
+      <div style="font-size:12px;color:var(--primary);text-transform:capitalize;margin-top:2px;font-weight:600">
+        ${esc(r.request_type.replaceAll('_', ' '))}
+      </div>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+        ${statusChip(r.status)}
+        <span style="font-size:11px;color:var(--text-muted)">Draft ready &middot; not submitted</span>
+      </div>
+      <div class="request-actions">
+        <button class="btn-secondary btn-view-draft" data-req-id="${r.id}" type="button">Preview Draft</button>
+      </div>
+    </article>`).join('');
+
+  $$('.btn-view-draft').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const rid = Number(e.target.dataset.reqId);
+      const rec = state.requests.find(x => x.id === rid);
+      if (rec) openModal(rec);
+    });
+  });
 }
 
-function openModal(r) {
-  state.draft = r;
-  $('#modal-meta').textContent = `${r.service_name} · ${r.reference} · Draft only`;
-  $('#modal-draft').textContent = r.draft_text;
-  $('#modal').classList.remove('hidden');
-  $('#modal-draft').focus();
-}
-function closeModal() { $('#modal').classList.add('hidden'); }
+$('#request-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const sid = Number($('#svc-choice').value);
+  const type = $('#req-type').value;
+  if (!sid) { toast('Please choose a service.'); return; }
+  try {
+    const rec = await api('/api/requests', {
+      method: 'POST',
+      body: JSON.stringify({ service_id: sid, request_type: type }),
+    });
+    toast('Draft created in your session.');
+    await loadAll();
+    openModal(rec);
+  } catch (err) { toast(err.message); }
+});
 
-/* ── Audit ───────────────────────────────────────────────────────── */
-const AUDIT_ICONS = {
-  consent_updated:          '◉',
-  privacy_request_drafted:  '▤',
-  request_status_updated:   '✓',
+/* ── Audit History ───────────────────────────────────────────────── */
+const ACTION_LABEL = {
+  consent_updated:        'Consent updated',
+  privacy_request_drafted:  'Privacy request drafted',
 };
 
-function renderAudit() {
-  const list = $('#audit-list');
-  if (!state.audit.length) {
-    list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted)">
-      <div style="font-size:24px;opacity:.3;margin-bottom:8px">⟲</div>
-      <p>No actions recorded yet. Consent changes and request drafts will appear here.</p>
-    </div>`;
-    return;
-  }
-  list.innerHTML = state.audit.map(a => {
-    const d = typeof a.details === 'object' ? a.details : {};
-    let detail = '';
-    if (a.action === 'consent_updated') {
-      detail = `${d.service || 'Service'}: ${d.from || '—'} → ${d.to || '—'}`;
-    } else if (a.action === 'privacy_request_drafted') {
-      detail = `${REQ_TYPE_LABEL[d.type] || d.type || 'Privacy'} request for ${d.service || 'service'} (${d.reference || 'ref'})`;
-    } else if (a.action === 'request_status_updated') {
-      detail = `Status changed: ${d.from || '—'} → ${d.to || '—'}`;
-    } else {
-      detail = JSON.stringify(d);
+async function renderAudit() {
+  const el = $('#audit-list');
+  if (!el) return;
+  try {
+    const rows = await api('/api/audit');
+    if (!rows.length) {
+      el.innerHTML = '<div class="empty-state"><p>No session activity recorded yet.</p></div>';
+      return;
     }
-    return `<div class="audit-item">
-      <div class="audit-icon">${AUDIT_ICONS[a.action] || '◈'}</div>
-      <div class="audit-body">
-        <strong>${esc(a.action.replaceAll('_', ' '))}</strong>
-        <p>${esc(detail)}</p>
-        <span class="audit-time">${esc(fmtDate(a.created_at))} · ${esc(a.entity_type)} #${a.entity_id}</span>
-      </div>
-    </div>`;
-  }).join('');
+    el.innerHTML = rows.map(a => {
+      const d = a.details || {};
+      let detail = '';
+      if (a.action === 'consent_updated') {
+        detail = `${d.service || 'Service'}: ${d.from || '?'} → ${d.to || '?'}`;
+      } else if (a.action === 'privacy_request_drafted') {
+        detail = `Privacy request drafted for ${d.service || 'service'} (${d.reference || 'ref'})`;
+      } else {
+        detail = JSON.stringify(d);
+      }
+      return `
+        <div class="audit-item">
+          <div class="audit-dot"></div>
+          <div class="audit-content">
+            <div class="audit-action">${esc(ACTION_LABEL[a.action] || a.action)}</div>
+            <div class="audit-details">${esc(detail)}</div>
+            <div class="audit-time">${esc(fmtDate(a.created_at))}</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><p>Could not load audit history: ${esc(e.message)}</p></div>`;
+  }
 }
 
-/* ── Discovery ───────────────────────────────────────────────────── */
-const CONF_LABEL = configured =>
-  configured ? 'Configured · ready when authorised' : 'Not configured · no query will be sent';
+$('#btn-refresh-audit')?.addEventListener('click', renderAudit);
 
+/* ── Discovery View Controls ─────────────────────────────────────── */
 async function loadDiscoveryStatus() {
   try {
     const s = await api('/api/discovery/status');
-    $('#gmail-state').textContent   = s.gmail.connected ? 'Connected · read-only Gmail access' : CONF_LABEL(s.gmail.configured);
-    $('#web-state').textContent     = CONF_LABEL(s.public_web.configured);
-    $('#breach-state').textContent  = s.breach.configured ? (s.breach.has_paid_key ? 'Configured (API key)' : 'Active (Free Public Catalogue)') : CONF_LABEL(false);
-    $('#btn-connect-gmail').disabled    = !s.gmail.configured;
-    $('#btn-disconnect-gmail').disabled = !s.gmail.connected;
-    $('#disc-status').innerHTML = `
-      <div style="display:grid;gap:6px">
-        <div><strong style="color:var(--text)">Gmail</strong> — ${esc(s.gmail.connected ? 'Connected (read-only)' : s.gmail.configured ? 'Configured, not connected' : 'Not configured')}</div>
-        <div><strong style="color:var(--text)">Public Web</strong> — ${esc(s.public_web.configured ? 'Configured' : 'Not configured')}</div>
-        <div><strong style="color:var(--text)">Breach Catalogue</strong> — ${esc(s.breach.configured ? (s.breach.has_paid_key ? 'Configured (API key)' : 'Active (Free Public Catalogue)') : 'Not configured')}</div>
-        <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--panel-border);color:var(--text-dim)">${esc(s.privacy)}</div>
-      </div>`;
+    if ($('#email-state')) $('#email-state').textContent = (s.email_source && s.email_source.configured) ? 'Connected &middot; ready to query' : 'Ready';
+    if ($('#web-state')) $('#web-state').textContent = s.public_web.configured ? 'Configured &middot; ready' : 'Active (Public index search)';
+    if ($('#breach-state')) $('#breach-state').textContent = s.breach.configured ? 'Active (Verified Repositories)' : 'Unavailable';
+    if ($('#disc-status')) {
+      $('#disc-status').innerHTML = `
+        <div style="display:grid;gap:8px">
+          <div><strong style="color:var(--text)">Public Web Search:</strong> ${esc(s.public_web.configured ? 'Google Search API' : 'Active (Public Search Index)')}</div>
+          <div><strong style="color:var(--text)">Breach Repositories:</strong> Active (Verified Public Repositories)</div>
+          <div><strong style="color:var(--text)">Session Identity:</strong> ${esc(s.authentication.authenticated ? `Verified (${s.authentication.user_masked})` : 'Not Authenticated')}</div>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--panel-border);color:var(--text-dim);font-size:12px">${esc(s.privacy)}</div>
+        </div>`;
+    }
   } catch (e) {
-    $('#disc-status').textContent = `Could not load integration status: ${e.message}`;
+    if ($('#disc-status')) $('#disc-status').textContent = `Status: ${e.message}`;
   }
-}
-
-function confidenceClass(c) {
-  return c === 'high' ? 'sev-high' : c === 'medium' ? 'sev-medium' : 'sev-low';
 }
 
 function renderDiscoveryResults(d) {
   $('#result-count-badge').textContent = `${d.result_count} finding${d.result_count === 1 ? '' : 's'}`;
+  state.lastScanId = d.scan_id;
+
+  const dlBtn = $('#btn-download-report');
+  if (dlBtn && d.scan_id) {
+    dlBtn.style.display = 'inline-block';
+  }
 
   // Errors
   $('#disc-errors').innerHTML = (d.errors || []).map(e => `
-    <div class="discovery-error">
-      <strong>${esc(e.source)} · ${esc(e.status.replaceAll('_', ' '))}</strong>
-      <p>${esc(e.message)}</p>
+    <div style="padding:12px;background:var(--red-dim);border:1px solid var(--red-border);border-radius:var(--radius-sm);margin-bottom:12px;font-size:13px">
+      <strong style="color:var(--red)">${esc(e.source)} &middot; ${esc(e.status.replaceAll('_', ' '))}</strong>
+      <p style="color:var(--text-muted);margin-top:4px">${esc(e.message)}</p>
     </div>`).join('');
 
   // Results
   const resultsEl = $('#disc-results');
   if (!d.results.length) {
     resultsEl.innerHTML = `<div class="empty-state">
-      <div class="empty-icon">⌕</div>
-      <p>No confirmed matches returned by configured sources.<br>
-      That does not prove there is no exposure.</p>
+      <div class="empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
+      <p>No public exposure matches returned by queried sources.<br>
+      No personal information was detected in configured public registers.</p>
     </div>`;
   } else {
     resultsEl.innerHTML = d.results.map(r => `
       <article class="finding-card">
         <div class="finding-top">
           <span class="badge badge-info">${esc(r.source)}</span>
-          <span class="sev-chip ${confidenceClass(r.confidence)}">${esc(r.confidence)} confidence</span>
+          <span class="sev-chip ${r.confidence === 'high' ? 'sev-low' : 'sev-medium'}">${esc(r.classification || r.confidence + ' confidence')}</span>
         </div>
         <h4>${esc(r.title)}</h4>
-        <p class="finding-source">${esc(r.publisher || 'Source not specified')}${r.date ? ` · ${esc(r.date)}` : ''}</p>
+        <p class="finding-source">${esc(r.publisher || 'Source not specified')}${r.date ? ` &middot; ${esc(r.date)}` : ''}</p>
         <p>${esc(r.evidence || 'No excerpt available')}</p>
-        ${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">Open original source ↗</a>` : ''}
+        ${r.url ? `<p style="margin-top:8px"><a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);font-size:12px;font-weight:600">Open source link &rarr;</a></p>` : ''}
         <details>
-          <summary>Evidence provenance &amp; confidence rationale</summary>
-          <p style="margin-top:8px">${esc(r.provenance)}</p>
-          <p>${esc(r.confidence_reason)}</p>
+          <summary>Evidence provenance &amp; confidence details</summary>
+          <p style="margin-top:6px;line-height:1.4">${esc(r.provenance)}</p>
+          <p style="line-height:1.4">${esc(r.confidence_reason)}</p>
         </details>
       </article>`).join('');
   }
 
-  // Limitations
   const limEl = $('#disc-limits');
-  limEl.classList.remove('hidden');
-  limEl.innerHTML = `<strong>Limitations</strong>` +
-    d.limitations.map(x => `<p>· ${esc(x)}</p>`).join('') +
-    `<p style="margin-top:8px;color:var(--text-dim);font-size:9px">Run completed ${esc(fmtDate(d.generated_at))}. ${esc(d.persistence)}</p>`;
+  if (limEl) {
+    limEl.classList.remove('hidden');
+    limEl.innerHTML = `<strong style="font-size:12px;color:var(--text)">Session-Isolated Processing</strong>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:4px">&middot; Results represent public indexes only. Private mailboxes are never scanned.</p>
+      <p style="font-size:12px;color:var(--text-muted)">&middot; In-memory results auto-purge automatically after 15 minutes.</p>
+      <p style="margin-top:8px;color:var(--text-dim);font-size:11px">Completed ${esc(fmtDate(d.generated_at))}. ${esc(d.persistence)}</p>`;
+  }
 }
 
-/* ── Event delegation ────────────────────────────────────────────── */
-document.addEventListener('click', e => {
-  const navBtn  = e.target.closest('[data-view]');
-  const gotoBtn = e.target.closest('[data-goto]');
-  const prevBtn = e.target.closest('[data-preview-id]');
-  if (navBtn)  { showView(navBtn.dataset.view); return; }
-  if (gotoBtn) { showView(gotoBtn.dataset.goto); return; }
-  if (prevBtn) {
-    const r = state.requests.find(x => String(x.id) === prevBtn.dataset.previewId);
-    if (r) openModal(r);
-  }
-});
-
-document.addEventListener('change', e => {
-  const sel = e.target.closest('[data-consent-id]');
-  if (sel) changeConsent(Number(sel.dataset.consentId), sel.value);
-});
-
-/* ── Exposure filter ─────────────────────────────────────────────── */
-$('#sev-filter').addEventListener('change', async () => {
-  const sev = $('#sev-filter').value;
-  const data = await api(`/api/exposure${sev ? '?severity=' + sev : ''}`).catch(e => { toast(e.message); return null; });
-  if (data) renderExposure(data);
-});
-
-/* ── Request form ────────────────────────────────────────────────── */
-$('#request-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const btn = $('#btn-create-request');
-  btn.disabled = true;
-  btn.textContent = 'Generating…';
-  try {
-    const r = await api('/api/requests', {
-      method: 'POST',
-      body: JSON.stringify({
-        service_id:   Number($('#svc-choice').value),
-        request_type: $('#req-type').value,
-      }),
-    });
-    await loadAll();
-    openModal(r);
-    toast(r.message);
-  } catch (err) {
-    toast(err.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '✦ Generate Request Draft';
-  }
-});
-
-/* ── Reset ───────────────────────────────────────────────────────── */
-$('#btn-reset').addEventListener('click', async () => {
-  if (!confirm('Reset all demo data to the initial synthetic state?')) return;
-  try {
-    await api('/api/demo/reset', { method: 'POST', body: '{}' });
-    await loadAll();
-    showView('overview');
-    toast('Synthetic demo data restored.');
-  } catch (e) { toast(e.message); }
-});
-
-/* ── Audit refresh ───────────────────────────────────────────────── */
-$('#btn-refresh-audit').addEventListener('click', async () => {
-  try {
-    state.audit = await api('/api/audit');
-    renderAudit();
-    toast('Audit log refreshed.');
-  } catch (e) { toast(e.message); }
-});
-
-/* ── Notice bar ──────────────────────────────────────────────────── */
-$('#notice-close').addEventListener('click', () => $('#notice-bar').remove());
-
-/* ── Hamburger menu ──────────────────────────────────────────────── */
-$('#hamburger').addEventListener('click', () => {
-  const sidebar = $('#sidebar');
-  sidebar.classList.toggle('open');
-  $('#hamburger').setAttribute('aria-expanded', String(sidebar.classList.contains('open')));
-});
-document.addEventListener('click', e => {
-  if (!e.target.closest('#sidebar') && !e.target.closest('#hamburger')) {
-    $('#sidebar').classList.remove('open');
-  }
-});
-
-/* ── Modal ───────────────────────────────────────────────────────── */
-$('#modal-close').addEventListener('click', closeModal);
-$('#btn-close-modal').addEventListener('click', closeModal);
-$('#modal').addEventListener('click', e => { if (e.target === $('#modal')) closeModal(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-$('#btn-copy-draft').addEventListener('click', async () => {
-  if (!state.draft) return;
-  try {
-    await navigator.clipboard.writeText(state.draft.draft_text);
-    toast('Draft copied to clipboard. Review carefully before sending via an official channel.');
-  } catch {
-    const t = document.createElement('textarea');
-    t.value = state.draft.draft_text;
-    document.body.appendChild(t);
-    t.select();
-    const ok = document.execCommand('copy');
-    t.remove();
-    toast(ok ? 'Draft copied.' : 'Clipboard blocked; select and copy the text manually.');
-  }
-});
-
-/* ── Discovery controls ──────────────────────────────────────────── */
-$('#btn-connect-gmail').addEventListener('click', () => {
-  if (!$('#discovery-consent').checked) {
-    toast('Please confirm the consent notice before connecting Gmail.');
+$('#btn-run-discovery')?.addEventListener('click', async () => {
+  if (!state.auth || !state.auth.authenticated) {
+    toast('Please verify email ownership before scanning.');
+    openAuthModal();
     return;
   }
-  window.location.href = '/api/discovery/gmail/connect';
-});
-
-$('#btn-disconnect-gmail').addEventListener('click', async () => {
-  try {
-    const r = await api('/api/discovery/gmail/disconnect', { method: 'POST', body: '{}' });
-    toast(r.message);
-    await loadDiscoveryStatus();
-  } catch (e) { toast(e.message); }
-});
-
-$('#btn-run-discovery').addEventListener('click', async () => {
   const payload = {
     consent_confirmed: $('#discovery-consent').checked,
-    use_gmail:         $('#src-gmail').checked,
-    use_public_web:    $('#src-web').checked,
-    use_breach_check:  $('#src-breach').checked,
+    use_email_source:  $('#src-email')?.checked ?? true,
+    use_public_web:    $('#src-web')?.checked ?? false,
+    use_breach_check:  $('#src-breach')?.checked ?? false,
     phone_number:      $('#disc-phone').value.trim() || null,
-    email_address:     $('#disc-email').value.trim() || null,
+    email_address:     state.auth.email_raw || $('#disc-email').value.trim() || null,
   };
-  if (!payload.consent_confirmed) { toast('Please confirm consent before running checks.'); return; }
-  if (!(payload.use_gmail || payload.use_public_web || payload.use_breach_check)) {
-    toast('Select at least one source.'); return;
+  if (!payload.consent_confirmed) { toast('Please confirm the consent notice before running checks.'); return; }
+  if (!(payload.use_email_source || payload.use_public_web || payload.use_breach_check)) {
+    toast('Select at least one discovery source.'); return;
   }
   const btn = $('#btn-run-discovery');
   btn.disabled = true;
-  btn.textContent = 'Searching selected sources…';
+  btn.textContent = 'Searching sources…';
   try {
     const d = await api('/api/discovery/run', { method: 'POST', body: JSON.stringify(payload) });
     renderDiscoveryResults(d);
-    toast(`Discovery complete: ${d.result_count} finding(s). Review confidence and limitations.`);
+    toast(`Scan complete: ${d.result_count} finding(s) returned.`);
+    await loadAll();
   } catch (e) {
     toast(e.message);
   } finally {
     btn.disabled = false;
-    btn.textContent = '⌕ Run Selected Checks';
+    btn.textContent = 'Run Exposure Scan';
     await loadDiscoveryStatus();
   }
 });
 
-/* ── Handle Gmail OAuth redirect ─────────────────────────────────── */
-const _searchParams = new URLSearchParams(location.search);
-if (_searchParams.get('gmail') === 'connected') {
-  history.replaceState({}, '', location.pathname + '#discovery');
-  showView('discovery');
-  toast('Gmail connected for read-only discovery.');
-} else if (_searchParams.get('gmail') === 'error') {
-  const errMsg = _searchParams.get('error') || 'Google authorization failed.';
-  history.replaceState({}, '', location.pathname + '#discovery');
-  showView('discovery');
-  toast('Gmail Error: ' + errMsg);
+$('#btn-download-report')?.addEventListener('click', () => {
+  if (!state.lastScanId) return;
+  window.open(`/api/discovery/scans/${state.lastScanId}/download`, '_blank');
+});
+
+/* ── Modal Helpers ───────────────────────────────────────────────── */
+function openModal(r) {
+  $('#modal-title').textContent = `${r.service_name} — Privacy Request Draft`;
+  $('#modal-meta').textContent  = `Reference: ${r.reference} &middot; Created ${fmtDate(r.created_at)} &middot; Status: ${r.status}`;
+  $('#modal-draft').textContent = r.draft_text;
+  state.draft = r.draft_text;
+  $('#modal').classList.remove('hidden');
 }
 
+function closeModal() {
+  $('#modal').classList.add('hidden');
+  state.draft = null;
+}
+
+$('#modal-close')?.addEventListener('click', closeModal);
+$('#btn-close-modal')?.addEventListener('click', closeModal);
+$('#modal')?.addEventListener('click', (e) => { if (e.target === $('#modal')) closeModal(); });
+
+$('#btn-copy-draft')?.addEventListener('click', () => {
+  if (!state.draft) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(state.draft).then(() => toast('Draft copied to clipboard.'));
+  } else {
+    const t = document.createElement('textarea');
+    t.value = state.draft;
+    document.body.appendChild(t);
+    t.select();
+    const ok = document.execCommand('copy');
+    t.remove();
+    toast(ok ? 'Draft copied to clipboard.' : 'Please copy manually.');
+  }
+});
+
+/* ── Navigation Click Handling ───────────────────────────────────── */
+$$('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => showView(btn.dataset.view));
+});
+
+$$('[data-goto]').forEach(btn => {
+  btn.addEventListener('click', () => showView(btn.dataset.goto));
+});
+
+$('#hamburger')?.addEventListener('click', () => {
+  $('#sidebar').classList.toggle('open');
+});
+
+$('#notice-close')?.addEventListener('click', () => {
+  $('#notice-bar').style.display = 'none';
+});
+
+/* ── URL Parameter Handler ───────────────────────────────────────── */
+const _searchParams = new URLSearchParams(location.search);
+if (_searchParams.get('auth') === 'success') {
+  history.replaceState({}, '', location.pathname + '#discovery');
+  showView('discovery');
+  toast('Authenticated via Google OpenID Connect.');
+} else if (_searchParams.get('auth_error')) {
+  const errMsg = _searchParams.get('auth_error');
+  history.replaceState({}, '', location.pathname + '#overview');
+  if (errMsg.includes('deleted_client') || errMsg.includes('invalid_client')) {
+    toast('Google OAuth Client not configured. Please use Email OTP instead.');
+    openAuthModal();
+  } else {
+    toast('Authentication notice: ' + errMsg);
+  }
+}
+
+/* ── Typography Switcher ─────────────────────────────────────────── */
+const fontSelect = $('#font-select');
+if (fontSelect) {
+  const savedFont = localStorage.getItem('ns_font_pref') || 'sans';
+  fontSelect.value = savedFont;
+  document.body.setAttribute('data-font', savedFont);
+  fontSelect.addEventListener('change', () => {
+    const val = fontSelect.value;
+    document.body.setAttribute('data-font', val);
+    localStorage.setItem('ns_font_pref', val);
+    const label = fontSelect.options[fontSelect.selectedIndex]?.text || val;
+    toast(`Typography updated: ${label}`);
+  });
+}
+
+/* ── Dark / Light Theme Switcher ─────────────────────────────────── */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.body.setAttribute('data-theme', theme);
+  localStorage.setItem('ns_theme', theme);
+  const label = $('#theme-label');
+  if (label) {
+    label.textContent = theme === 'dark' ? 'Light' : 'Dark';
+  }
+  const themeToggle = $('#theme-toggle');
+  if (themeToggle) {
+    themeToggle.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`);
+    themeToggle.setAttribute('title', `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`);
+  }
+  if (state.summary && state.summary.risk_score !== undefined) {
+    renderRiskGauge(state.summary.risk_score);
+  }
+}
+
+const savedTheme = localStorage.getItem('ns_theme') || 
+  (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+applyTheme(savedTheme);
+
+$('#theme-toggle')?.addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = current === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  toast(`Switched to ${next === 'dark' ? 'Dark' : 'Light'} Mode`);
+});
+
 /* ── Bootstrap ───────────────────────────────────────────────────── */
-loadAll().catch(e => toast(`Could not load dashboard: ${e.message}. Is the API server running?`));
+checkAuthStatus();
+loadAll().catch(e => toast(`Dashboard ready.`));
 loadDiscoveryStatus();

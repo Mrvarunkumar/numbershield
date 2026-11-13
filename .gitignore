@@ -2,11 +2,14 @@
 *.env
 .env.*
 !.env.example
-client_secret*.json
-*.apps.googleusercontent.com.json
 __pycache__/
 *.py[cod]
 *$py.class
 env/
 .venv/
 backend/env/
+client_secret_580022267858-urm7nev65t1ljsn9a9nv9arcjag3sfao.apps.googleusercontent.com.json
+client_secret*.json
+*.log
+
+

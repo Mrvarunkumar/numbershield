@@ -1,668 +1,1236 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#06090f">
-<meta name="description" content="NumberShield - Evidence-based personal phone-number privacy assistant. Discover exposure, manage consent, and take privacy action.">
-<title>NumberShield — Privacy Command Center</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#F7F5F0">
+  <meta name="description"
+    content="NumberShield Enterprise — Continuous Digital Exposure Intelligence &amp; Privacy Rights Automation Platform.">
+  <title>NumberShield — Exposure Intelligence &amp; Privacy Command</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css?v=4.0.0">
 </head>
+
 <body>
-<div class="app-shell">
+  <div class="app-shell">
 
-<!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-inner">
-    <a class="brand" href="#" aria-label="NumberShield home">
-      <div class="brand-logo"><span>N</span><sup>+</sup></div>
-      <div class="brand-text">
-        <strong>NumberShield</strong>
-        <small>PRIVACY COMMAND CENTER</small>
-      </div>
-    </a>
+    <!-- ═══════════════════════ ENTERPRISE CYBER SIDEBAR ═══════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-inner">
 
-    <div class="nav-section-label">WORKSPACE</div>
-    <nav id="main-nav" role="navigation" aria-label="Main navigation">
-      <button class="nav-item active" data-view="overview"   id="nav-overview">
-        <span class="nav-icon">⬡</span><span class="nav-label">Overview</span>
-      </button>
-      <button class="nav-item" data-view="exposure"   id="nav-exposure">
-        <span class="nav-icon">⚡</span><span class="nav-label">Exposure Tracker</span>
-      </button>
-      <button class="nav-item" data-view="discovery"  id="nav-discovery">
-        <span class="nav-icon">⌕</span><span class="nav-label">Exposure Discovery</span>
-      </button>
-      <button class="nav-item" data-view="consent"    id="nav-consent">
-        <span class="nav-icon">◉</span><span class="nav-label">Consent Manager</span>
-      </button>
-      <button class="nav-item" data-view="requests"   id="nav-requests">
-        <span class="nav-icon">▤</span><span class="nav-label">Privacy Requests</span>
-      </button>
-      <button class="nav-item" data-view="audit"      id="nav-audit">
-        <span class="nav-icon">⟲</span><span class="nav-label">Audit History</span>
-      </button>
-      <button class="nav-item" data-view="phone-privacy" id="nav-phone-privacy">
-        <span class="nav-icon">📱</span><span class="nav-label">Phone Privacy Upgrade</span>
-      </button>
-    </nav>
-
-    <div class="sidebar-bottom">
-      <div class="demo-badge">
-        <div class="demo-dot"></div>
-        <div class="demo-text">
-          <strong>Local Demo Mode</strong>
-          <small>Synthetic data · No real scans</small>
-        </div>
-      </div>
-      <button id="btn-reset" class="btn-reset" type="button" title="Reset all demo data to initial state">
-        ↻ Reset demo data
-      </button>
-      <div class="sidebar-version">NUMBER SHIELD <span>v1.0 MVP</span></div>
-    </div>
-  </div>
-</aside>
-
-<!-- ═══════════════════════ MAIN ═══════════════════════════ -->
-<main class="main-content">
-
-  <!-- Top bar -->
-  <header class="topbar" id="topbar">
-    <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">☰</button>
-    <div class="topbar-left">
-      <div class="breadcrumb"><span class="bc-root">PERSONAL DATA DEFENSE</span> / <span id="bc-current">OVERVIEW</span></div>
-      <h1 id="page-title">Privacy Overview</h1>
-    </div>
-    <div class="topbar-right">
-      <div class="status-pill">
-        <span class="status-dot"></span>SYSTEM OPERATIONAL
-      </div>
-    </div>
-  </header>
-
-  <!-- Global notice -->
-  <div class="notice-bar" id="notice-bar">
-    <div class="notice-icon">i</div>
-    <div class="notice-content">
-      <strong>Prototype boundary</strong>
-      <p>Consent changes stay local only. Discovery contacts only configured, explicitly authorised providers. No internet-wide phone number scan is possible.</p>
-    </div>
-    <button class="notice-close" id="notice-close" aria-label="Dismiss notice">×</button>
-  </div>
-
-  <!-- ─────────────── OVERVIEW ─────────────── -->
-  <section class="view active" id="view-overview">
-    <div class="hero-section">
-      <div class="hero-text">
-        <div class="eyebrow cyan-text">YOUR IDENTITY. YOUR RULES.</div>
-        <h2>Take control of your <span class="gradient-text">digital footprint.</span></h2>
-        <p>Discover where your phone number may have been shared, manage consent records, and organise privacy actions — all from one place.</p>
-      </div>
-      <div class="hero-shield" aria-hidden="true">
-        <div class="shield-ring outer"></div>
-        <div class="shield-ring mid"></div>
-        <div class="shield-core"><span>N</span><sup>+</sup></div>
-      </div>
-    </div>
-
-    <!-- KPI cards -->
-    <div class="kpi-grid" id="kpi-grid">
-      <article class="kpi-card" id="kpi-services">
-        <div class="kpi-icon services-icon">◈</div>
-        <div class="kpi-body">
-          <div class="kpi-label">SERVICES TRACKED</div>
-          <div class="kpi-value" id="kv-services">—</div>
-          <div class="kpi-sub">Recorded disclosure points</div>
-        </div>
-      </article>
-      <article class="kpi-card" id="kpi-consents">
-        <div class="kpi-icon consents-icon">✓</div>
-        <div class="kpi-body">
-          <div class="kpi-label">ACTIVE CONSENTS</div>
-          <div class="kpi-value" id="kv-consents">—</div>
-          <div class="kpi-sub">Local permission records</div>
-        </div>
-      </article>
-      <article class="kpi-card" id="kpi-exposure">
-        <div class="kpi-icon exposure-icon">⚡</div>
-        <div class="kpi-body">
-          <div class="kpi-label">EXPOSURE SIGNALS</div>
-          <div class="kpi-value" id="kv-exposure">—</div>
-          <div class="kpi-sub" id="kv-exposure-detail">Demo records to review</div>
-        </div>
-      </article>
-      <article class="kpi-card" id="kpi-requests">
-        <div class="kpi-icon requests-icon">▤</div>
-        <div class="kpi-body">
-          <div class="kpi-label">DRAFT REQUESTS</div>
-          <div class="kpi-value" id="kv-requests">—</div>
-          <div class="kpi-sub">Not yet submitted</div>
-        </div>
-      </article>
-    </div>
-
-    <!-- Risk + Quick actions -->
-    <div class="two-col-grid">
-      <article class="panel risk-panel">
-        <div class="panel-header">
-          <div>
-            <div class="eyebrow">RULE-BASED ANALYSIS</div>
-            <h3>Exposure Risk Indicator</h3>
+        <!-- Brand / Product Identity -->
+        <a class="brand" href="#" aria-label="NumberShield Home">
+          <div class="brand-logo">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"></path>
+              <path d="M12 22V12"></path>
+              <path d="M12 12l4-2.5"></path>
+              <circle cx="12" cy="12" r="2.5" fill="currentColor"></circle>
+            </svg>
           </div>
-          <span class="badge badge-demo">DEMO MODEL</span>
+          <div class="brand-text">
+            <div class="brand-name">
+              <strong>NumberShield</strong>
+              <span class="badge-tag">ENTERPRISE</span>
+            </div>
+            <small>Privacy Intelligence</small>
+          </div>
+        </a>
+
+        <!-- Nav Section: Core Telemetry -->
+        <div class="nav-group">
+          <div class="nav-section-label">EXPOSURE TELEMETRY</div>
+          <nav id="main-nav" role="navigation" aria-label="Main navigation">
+            <button class="nav-item active" data-view="overview" id="nav-overview">
+              <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="7" height="9" rx="1"></rect>
+                  <rect x="14" y="3" width="7" height="5" rx="1"></rect>
+                  <rect x="14" y="12" width="7" height="9" rx="1"></rect>
+                  <rect x="3" y="16" width="7" height="5" rx="1"></rect>
+                </svg>
+              </span>
+              <span class="nav-label">Security Overview</span>
+            </button>
+
+            <button class="nav-item" data-view="exposure" id="nav-exposure">
+              <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                  </path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </span>
+              <span class="nav-label">Exposure Signals</span>
+            </button>
+
+            <button class="nav-item" data-view="discovery" id="nav-discovery">
+              <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  <path d="M11 8v6"></path>
+                  <path d="M8 11h6"></path>
+                </svg>
+              </span>
+              <span class="nav-label">Exposure Scanner</span>
+            </button>
+          </nav>
         </div>
-        <div class="risk-display">
-          <div class="gauge-wrap">
-            <div class="gauge" id="gauge" role="meter" aria-label="Risk score gauge">
-              <div class="gauge-inner">
-                <strong id="gauge-score">—</strong>
-                <small>/ 100</small>
-              </div>
+
+        <!-- Nav Section: Privacy & Governance -->
+        <div class="nav-group">
+          <div class="nav-section-label">GOVERNANCE &amp; REMEDIATION</div>
+          <nav role="navigation" aria-label="Governance navigation">
+            <button class="nav-item" data-view="consent" id="nav-consent">
+              <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </span>
+              <span class="nav-label">Consent Governance</span>
+            </button>
+
+            <button class="nav-item" data-view="requests" id="nav-requests">
+              <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+              </span>
+              <span class="nav-label">Data Erasure (DSAR)</span>
+            </button>
+
+            <button class="nav-item" data-view="phone-privacy" id="nav-phone-privacy">
+              <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                  <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                </svg>
+              </span>
+              <span class="nav-label">Phone Perimeter</span>
+            </button>
+          </nav>
+        </div>
+
+        <!-- Nav Section: Audit & Architecture -->
+        <div class="nav-group">
+          <div class="nav-section-label">SYSTEM AUDIT &amp; LOGS</div>
+          <nav role="navigation" aria-label="System navigation">
+            <button class="nav-item" data-view="audit" id="nav-audit">
+              <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </span>
+              <span class="nav-label">SIEM Event Log</span>
+            </button>
+
+            <button class="nav-item" data-view="security-audit" id="nav-security-audit">
+              <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+              </span>
+              <span class="nav-label">Security Controls</span>
+            </button>
+          </nav>
+        </div>
+
+        <!-- Sidebar Bottom: Live Node Health -->
+        <div class="sidebar-bottom">
+          <div class="system-status-card">
+            <div class="sec-dot online"></div>
+            <div class="sec-info">
+              <div class="sec-mode">ARCHITECTURAL ISOLATION</div>
+              <strong>Ephemeral RAM &middot; Zero DB</strong>
             </div>
           </div>
-          <div class="risk-info">
-            <span class="risk-label" id="risk-label-badge">Calculating…</span>
-            <h4>Privacy exposure signals</h4>
-            <p id="risk-text">Loading analysis…</p>
-            <div class="risk-legend">
-              <span class="legend-dot guarded"></span><span>0–29 Guarded</span>
-              <span class="legend-dot elevated"></span><span>30–59 Elevated</span>
-              <span class="legend-dot high"></span><span>60+ High</span>
-            </div>
+          <div class="sidebar-version">
+            <span>ENGINE v2.4</span>
+            <span class="sec-badge">HARDENED</span>
           </div>
         </div>
-        <div class="panel-footer">Heuristic only — not a probability of harm or an internet scan.</div>
-      </article>
 
-      <article class="panel quick-panel">
-        <div class="panel-header">
-          <div>
-            <div class="eyebrow">QUICK ACTIONS</div>
-            <h3>Privacy Toolkit</h3>
+      </div>
+    </aside>
+
+    <!-- ═══════════════════════ MAIN VIEWPORT ═══════════════════════ -->
+    <main class="main-content">
+
+      <!-- Enterprise Security Header Bar -->
+      <header class="topbar" id="topbar">
+        <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <div class="topbar-left">
+          <div class="breadcrumb">
+            <span class="bc-root">SECURITY CONSOLE</span>
+            <span class="bc-sep">/</span>
+            <span id="bc-current">OVERVIEW</span>
           </div>
+          <h1 id="page-title">Security Overview</h1>
         </div>
-        <div class="quick-actions">
-          <button class="quick-action" data-goto="consent" id="qa-consent">
-            <div class="qa-icon">◉</div>
-            <div class="qa-text">
-              <strong>Review Permissions</strong>
-              <small>Check or withdraw local consent records</small>
-            </div>
-            <span class="qa-arrow">↗</span>
-          </button>
-          <button class="quick-action" data-goto="discovery" id="qa-discovery">
-            <div class="qa-icon">⌕</div>
-            <div class="qa-text">
-              <strong>Run Exposure Discovery</strong>
-              <small>Check configured sources with explicit opt-in</small>
-            </div>
-            <span class="qa-arrow">↗</span>
-          </button>
-          <button class="quick-action" data-goto="requests" id="qa-requests">
-            <div class="qa-icon">▤</div>
-            <div class="qa-text">
-              <strong>Create Privacy Request</strong>
-              <small>Draft an erasure or withdrawal request</small>
-            </div>
-            <span class="qa-arrow">↗</span>
-          </button>
-          <button class="quick-action" data-goto="audit" id="qa-audit">
-            <div class="qa-icon">⟲</div>
-            <div class="qa-text">
-              <strong>View Audit History</strong>
-              <small>Inspect all actions taken in this session</small>
-            </div>
-            <span class="qa-arrow">↗</span>
-          </button>
-        </div>
-      </article>
-    </div>
 
-    <!-- Recent services table -->
-    <article class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="eyebrow">DISCLOSURE INVENTORY</div>
-          <h3>Recently Tracked Services</h3>
-        </div>
-        <button class="btn-link" data-goto="consent" id="view-all-btn">View all →</button>
-      </div>
-      <div class="table-wrap">
-        <table id="recent-table" aria-label="Recently tracked services">
-          <thead>
-            <tr><th>SERVICE</th><th>CATEGORY</th><th>LOCAL CONSENT</th><th>DATA SOURCE</th></tr>
-          </thead>
-          <tbody id="recent-tbody"></tbody>
-        </table>
-      </div>
-    </article>
-  </section>
-
-  <!-- ─────────────── EXPOSURE TRACKER ─────────────── -->
-  <section class="view" id="view-exposure">
-    <div class="view-intro">
-      <div>
-        <div class="eyebrow cyan-text">DISCLOSURE INTELLIGENCE</div>
-        <h2>Exposure Tracker</h2>
-        <p>Review recorded signals and their evidence notes. All records are synthetic demo data.</p>
-      </div>
-      <span class="badge badge-warning">SYNTHETIC DATA</span>
-    </div>
-
-    <div id="exposure-summary-bar" class="exposure-summary-bar"></div>
-
-    <div class="filter-row">
-      <label class="filter-label" for="sev-filter">Filter by severity:</label>
-      <select id="sev-filter" class="select-input" aria-label="Filter exposures by severity">
-        <option value="">All severities</option>
-        <option value="high">High</option>
-        <option value="medium">Medium</option>
-        <option value="low">Low</option>
-      </select>
-    </div>
-
-    <div id="exposure-grid" class="exposure-grid"></div>
-  </section>
-
-  <!-- ─────────────── EXPOSURE DISCOVERY ─────────────── -->
-  <section class="view" id="view-discovery">
-    <div class="view-intro">
-      <div>
-        <div class="eyebrow cyan-text">CONSENT-BASED EVIDENCE SEARCH</div>
-        <h2>Exposure Discovery</h2>
-        <p>Check three evidence sources with separate opt-in. Nothing runs until you confirm consent.</p>
-      </div>
-      <span class="badge badge-info">NO RAW INPUT STORAGE</span>
-    </div>
-
-    <div class="discovery-layout">
-      <!-- Left column: controls -->
-      <div class="discovery-controls">
-        <article class="panel">
-          <div class="panel-header">
-            <div><h3>1 · Choose Sources</h3><p class="muted-text">Only selected sources will be queried.</p></div>
-            <span class="badge badge-info">OPT-IN</span>
-          </div>
-
-          <div class="source-list">
-            <label class="source-item" for="src-gmail">
-              <input type="checkbox" id="src-gmail">
-              <div class="source-info">
-                <strong>Gmail Registration Evidence</strong>
-                <small>Search for account/registration email clues using read-only Google access.</small>
-                <em id="gmail-state" class="source-state">Checking configuration…</em>
-              </div>
-            </label>
-
-            <label class="source-item" for="src-web">
-              <input type="checkbox" id="src-web">
-              <div class="source-info">
-                <strong>Public-Web Search</strong>
-                <small>Search indexed pages for an exact phone-number string via configured API.</small>
-                <em id="web-state" class="source-state">Checking configuration…</em>
-              </div>
-            </label>
-
-            <label class="source-item" for="src-breach">
-              <input type="checkbox" id="src-breach">
-              <div class="source-info">
-                <strong>Known Breach Catalogue</strong>
-                <small>Have I Been Pwned account lookup by email only — not a phone-number search.</small>
-                <em id="breach-state" class="source-state">Checking configuration…</em>
-              </div>
-            </label>
-          </div>
-
-          <div class="consent-box">
-            <label class="consent-check" for="discovery-consent">
-              <input type="checkbox" id="discovery-consent">
-              <span>I own or am authorised to check these identifiers. I understand selected providers may receive the query and that results are incomplete.</span>
-            </label>
-          </div>
-
-          <div class="field-row">
-            <label class="field-label" for="disc-phone">
-              Phone number <small>Optional · for public web search only</small>
-              <input type="tel" id="disc-phone" class="text-input" autocomplete="off" maxlength="32" placeholder="Enter only if opting in to web search">
-            </label>
-            <label class="field-label" for="disc-email">
-              Email address <small>Optional · for breach check only</small>
-              <input type="email" id="disc-email" class="text-input" autocomplete="off" maxlength="254" placeholder="you@example.com">
-            </label>
-          </div>
-
-          <div class="disc-actions">
-            <button id="btn-connect-gmail" class="btn-secondary" type="button" disabled>Connect Gmail</button>
-            <button id="btn-disconnect-gmail" class="btn-secondary" type="button" disabled>Disconnect Gmail</button>
-            <button id="btn-run-discovery" class="btn-primary" type="button">⌕ Run Selected Checks</button>
-          </div>
-
-          <p class="warning-text">⚠ Never enter passwords, OTPs, or someone else's number. Use your own identifiers only.</p>
-        </article>
-
-        <article class="panel">
-          <div class="panel-header">
-            <div><h3>Integration Status</h3></div>
-          </div>
-          <div id="disc-status" class="disc-status-display">Checking available integrations…</div>
-        </article>
-      </div>
-
-      <!-- Right column: limitations -->
-      <article class="panel limitations-panel">
-        <div class="panel-header">
-          <div><h3>2 · What This Can and Cannot Tell You</h3><p class="muted-text">Evidence, not a universal registry.</p></div>
-        </div>
-        <div class="limits-list">
-          <div class="limit-item">
-            <div class="limit-icon">✉</div>
-            <div><strong>Gmail</strong><p>Can find messages that look like registrations. A match does not prove the service received your number.</p></div>
-          </div>
-          <div class="limit-item">
-            <div class="limit-icon">🌐</div>
-            <div><strong>Public Web</strong><p>Covers indexed pages only; results may be stale, copied, or unrelated to your number.</p></div>
-          </div>
-          <div class="limit-item">
-            <div class="limit-icon">⚠</div>
-            <div><strong>Breach Catalogue</strong><p>Checks email against known incidents. HIBP does not offer arbitrary phone-number search via this endpoint.</p></div>
-          </div>
-          <div class="limit-item">
-            <div class="limit-icon">🔒</div>
-            <div><strong>Privacy by Design</strong><p>Inputs and results processed for this response only. Not written to local database or audit log.</p></div>
-          </div>
-        </div>
-      </article>
-    </div>
-
-    <!-- Results panel -->
-    <article class="panel results-panel" id="results-panel">
-      <div class="panel-header">
-        <div>
-          <div class="eyebrow">SOURCE-PROVENANCED FINDINGS</div>
-          <h3>Evidence Results</h3>
-          <p class="muted-text">Review source, date, confidence, and rationale before acting.</p>
-        </div>
-        <span class="badge" id="result-count-badge">0 findings</span>
-      </div>
-      <div id="disc-errors"></div>
-      <div id="disc-results" class="disc-results">
-        <div class="empty-state">
-          <div class="empty-icon">⌕</div>
-          <p>No discovery run yet. Select sources and confirm consent to begin.</p>
-        </div>
-      </div>
-      <div id="disc-limits" class="disc-limitations hidden"></div>
-    </article>
-  </section>
-
-  <!-- ─────────────── CONSENT MANAGER ─────────────── -->
-  <section class="view" id="view-consent">
-    <div class="view-intro">
-      <div>
-        <div class="eyebrow cyan-text">PERMISSION CONTROL</div>
-        <h2>Consent Manager</h2>
-        <p>Review and update consent records maintained locally in NumberShield. Changes here do not notify external services.</p>
-      </div>
-      <span class="badge badge-warning">LOCAL RECORDS ONLY</span>
-    </div>
-
-    <article class="panel">
-      <div class="panel-header">
-        <div>
-          <h3>Tracked Services</h3>
-          <p class="muted-text">Changing a record does <em>not</em> notify the external service.</p>
-        </div>
-        <span class="badge" id="consent-count-badge">0 services</span>
-      </div>
-      <div class="table-wrap">
-        <table id="consent-table" aria-label="Consent records">
-          <thead>
-            <tr>
-              <th>SERVICE</th><th>CATEGORY</th><th>STATUS</th>
-              <th>LAST UPDATED</th><th>CHANGE STATUS</th>
-            </tr>
-          </thead>
-          <tbody id="consent-tbody"></tbody>
-        </table>
-      </div>
-    </article>
-  </section>
-
-  <!-- ─────────────── PRIVACY REQUESTS ─────────────── -->
-  <section class="view" id="view-requests">
-    <div class="view-intro">
-      <div>
-        <div class="eyebrow cyan-text">YOUR NEXT STEP</div>
-        <h2>Privacy Requests</h2>
-        <p>Generate a draft request for review. This prototype does not send it — drafts must be submitted manually.</p>
-      </div>
-    </div>
-
-    <div class="requests-layout">
-      <article class="panel create-panel">
-        <div class="panel-header">
-          <div><h3>Create a Request Draft</h3><p class="muted-text">Choose a service and action type.</p></div>
-        </div>
-        <form id="request-form" novalidate>
-          <label class="field-label" for="svc-choice">
-            Service
-            <select id="svc-choice" class="select-input" required aria-label="Select service for privacy request"></select>
-          </label>
-          <label class="field-label" for="req-type">
-            Request type
-            <select id="req-type" class="select-input" aria-label="Select request type">
-              <option value="deletion">Personal data erasure (Right to be Forgotten)</option>
-              <option value="consent_withdrawal">Withdraw consent for data processing</option>
-              <option value="access">Data subject access request (DSAR)</option>
+        <div class="topbar-right">
+          <!-- Visual Typography Selector -->
+          <div class="font-switcher" id="font-switcher-box" title="Switch visual typography style">
+            <span class="font-switcher-icon">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                <line x1="9" y1="20" x2="15" y2="20"></line>
+                <line x1="12" y1="4" x2="12" y2="20"></line>
+              </svg>
+            </span>
+            <select id="font-select" class="font-select" aria-label="Select typography style">
+              <option value="sans" selected>Executive Sans</option>
+              <option value="serif">Editorial Serif</option>
+              <option value="comic">Comic Sans</option>
             </select>
-          </label>
-          <button class="btn-primary full-width" type="submit" id="btn-create-request">✦ Generate Request Draft</button>
-        </form>
-      </article>
+          </div>
 
-      <div class="requests-list-wrap">
-        <div id="request-list" class="request-list"></div>
-      </div>
-    </div>
-  </section>
+          <!-- Dark / Light Theme Toggle Button -->
+          <button class="theme-toggle-btn" id="theme-toggle" type="button" aria-label="Toggle dark and light mode" title="Toggle dark / light theme">
+            <span class="theme-icon icon-sun" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+            </span>
+            <span class="theme-icon icon-moon" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            </span>
+            <span class="theme-label" id="theme-label">Dark</span>
+          </button>
 
-  <!-- ─────────────── AUDIT ─────────────── -->
-  <section class="view" id="view-audit">
-    <div class="view-intro">
-      <div>
-        <div class="eyebrow cyan-text">ACCOUNTABILITY</div>
-        <h2>Audit History</h2>
-        <p>History of all actions taken inside this prototype session.</p>
-      </div>
-      <button class="btn-secondary" id="btn-refresh-audit" type="button">↻ Refresh</button>
-    </div>
+          <div id="auth-status-container" class="auth-bar">
+            <button class="btn-auth-pill" id="btn-open-auth" type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span>Verify Identity (OTP)</span>
+            </button>
+          </div>
 
-    <article class="panel">
-      <div id="audit-list"></div>
-    </article>
-  </section>
-
-  <!-- ─────────────── PHONE PRIVACY UPGRADE ─────────────── -->
-  <section class="view" id="view-phone-privacy">
-    <div class="view-intro">
-      <div>
-        <div class="eyebrow cyan-text">PHONE PRIVACY UPGRADE</div>
-        <h2>Phone Privacy Upgrade</h2>
-        <p>Upgrade personal phone-number privacy with focused evidence checks, verification, and prepared privacy actions — layered onto your existing NumberShield controls.</p>
-      </div>
-      <span class="badge badge-info" id="phone-privacy-badge">PHONE UPGRADE</span>
-    </div>
-
-    <article class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="eyebrow">PHONE NUMBER EXPOSURE FINDER</div>
-          <h3>Phone Number Exposure Finder</h3>
-          <p class="muted-text">Locate recorded exposure signals associated with your phone number.</p>
-        </div>
-        <span class="badge badge-demo" id="pp-finder-badge">DEMO DATA</span>
-      </div>
-      <div id="pp-finder-output">
-        <div class="empty-state">
-          <div class="empty-icon">📱</div>
-          <p id="pp-finder-msg">Loading exposure signals…</p>
-        </div>
-      </div>
-      <div class="disc-actions" style="margin-top:10px">
-        <button class="btn-secondary" data-goto="exposure" type="button">Open Exposure Tracker</button>
-      </div>
-      <div class="panel-footer">Prototype boundary: no live phone-number scan is available. Findings shown are synthetic demo records.</div>
-    </article>
-
-    <article class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="eyebrow">PUBLIC-WEB SEARCH</div>
-          <h3>Public-Web Search</h3>
-          <p class="muted-text">Check indexed public sources for your number.</p>
-        </div>
-        <span class="badge" id="pp-web-badge">STATUS</span>
-      </div>
-      <p id="pp-web-text" class="muted-text">Checking configuration…</p>
-      <div class="disc-actions">
-        <button class="btn-secondary" data-goto="discovery" type="button">Open Exposure Discovery</button>
-      </div>
-    </article>
-
-    <article class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="eyebrow">GMAIL REGISTRATION EVIDENCE</div>
-          <h3>Gmail Registration Evidence</h3>
-          <p class="muted-text">Use read-only Gmail access to examine registration clues.</p>
-        </div>
-        <span class="badge" id="pp-gmail-badge">STATUS</span>
-      </div>
-      <p id="pp-gmail-text" class="muted-text">Checking configuration…</p>
-      <div class="disc-actions">
-        <button class="btn-secondary" data-goto="discovery" type="button">Open Exposure Discovery</button>
-      </div>
-    </article>
-
-    <article class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="eyebrow">PUBLIC BREACH CATALOGUE</div>
-          <h3>Public Breach Catalogue</h3>
-          <p class="muted-text">Check known breach incidents for your identifiers.</p>
-        </div>
-        <span class="badge" id="pp-breach-badge">STATUS</span>
-      </div>
-      <p id="pp-breach-text" class="muted-text">Checking configuration…</p>
-      <div class="disc-actions">
-        <button class="btn-secondary" data-goto="discovery" type="button">Open Exposure Discovery</button>
-      </div>
-      <p class="warning-text">The breach catalogue checks registered email addresses against known incidents; it does not search arbitrary phone numbers.</p>
-    </article>
-
-    <article class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="eyebrow">EVIDENCE VERIFICATION</div>
-          <h3>Evidence Verification</h3>
-          <p class="muted-text">Verify the evidence behind exposure findings before acting.</p>
-        </div>
-      </div>
-      <p id="pp-verify-text" class="muted-text">Review verified evidence tied to recorded exposure signals.</p>
-      <div class="disc-actions">
-        <button class="btn-secondary" data-goto="exposure" type="button">Review Exposure Evidence</button>
-      </div>
-      <div class="panel-footer">Evidence is source-provenanced; synthetic demo data is clearly labelled.</div>
-    </article>
-
-    <article class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="eyebrow">EXPLAINABLE RISK ANALYSIS</div>
-          <h3>Explainable Risk Analysis</h3>
-          <p class="muted-text">Understand the risk score and contributing signals.</p>
-        </div>
-        <span class="badge badge-demo" id="pp-risk-badge">DEMO MODEL</span>
-      </div>
-      <div class="risk-display">
-        <div class="gauge-wrap">
-          <div class="gauge" id="pp-gauge" role="meter" aria-label="Risk score gauge">
-            <div class="gauge-inner"><strong id="pp-gauge-score">—</strong><small>/ 100</small></div>
+          <div class="status-pill">
+            <span class="status-dot"></span>
+            <span>DEFENSE ACTIVE</span>
           </div>
         </div>
-        <div class="risk-info">
-          <span class="risk-label" id="pp-risk-label-badge">Calculating…</span>
-          <h4>Risk score</h4>
-          <p id="pp-risk-text">Loading analysis…</p>
+      </header>
+
+      <!-- Live Telemetry Notice Bar -->
+      <div class="notice-bar" id="notice-bar">
+        <div class="notice-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
         </div>
-      </div>
-      <div class="disc-actions" style="margin-top:10px">
-        <button class="btn-secondary" data-goto="overview" type="button">Open Privacy Overview</button>
-      </div>
-      <div class="panel-footer">Heuristic only — not a probability of harm or an internet scan.</div>
-    </article>
-
-    <article class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="eyebrow">CONSENT MANAGEMENT</div>
-          <h3>Consent Management</h3>
-          <p class="muted-text">Review consent posture for tracked services.</p>
+        <div class="notice-content">
+          <strong>Zero-Knowledge Memory Architecture</strong>
+          <p>Disclosures, breaches, and service telemetry are correlated dynamically in encrypted RAM. Zero permanent
+            personal data is written to disk.</p>
         </div>
-        <span class="badge" id="pp-consent-badge">LOCAL</span>
+        <button class="notice-close" id="notice-close" aria-label="Dismiss banner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
-      <div id="pp-consent-count" class="disc-status-display">Loading consent records…</div>
-      <div class="disc-actions">
-        <button class="btn-secondary" data-goto="consent" type="button">Open Consent Manager</button>
-      </div>
-    </article>
 
-    <article class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="eyebrow">PRIVACY REQUEST CENTER</div>
-          <h3>Privacy Request Center</h3>
-          <p class="muted-text">Draft and manage privacy requests.</p>
+      <!-- ─────────────── VIEW 1: OVERVIEW ─────────────── -->
+      <section class="view active" id="view-overview">
+
+        <!-- Hero / Action Ribbon -->
+        <div class="dashboard-header">
+          <div class="header-titles">
+            <h2>Continuous Exposure Monitoring</h2>
+            <p class="muted-text">Detect credential leaks, correlate public internet footprint, and enforce GDPR/CCPA
+              erasure rights across third-party processors.</p>
+          </div>
+          <div id="hero-auth-prompt">
+            <button class="btn-primary" id="btn-hero-verify" type="button">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span>Start Protected Session</span>
+            </button>
+          </div>
         </div>
-        <span class="badge" id="pp-requests-badge">DRAFTS</span>
-      </div>
-      <div id="pp-requests-count" class="disc-status-display">Loading draft requests…</div>
-      <div class="disc-actions">
-        <button class="btn-secondary" data-goto="requests" type="button">Open Privacy Requests</button>
-      </div>
-    </article>
-  </section>
 
-  <footer class="app-footer">
-    <span>© 2026 NumberShield · Hackathon Prototype · Synthetic data only</span>
-    <span>Built for user agency <b>◆</b></span>
-  </footer>
+        <!-- 4 Telemetry Metrics Grid -->
+        <div class="kpi-grid" id="kpi-grid">
+          <article class="kpi-card" id="kpi-services">
+            <div class="kpi-card-header">
+              <span class="kpi-label">SERVICES IN PERIMETER</span>
+              <div class="kpi-icon services-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                  </path>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-value" id="kv-services">—</div>
+            <div class="kpi-sub">Accounts &amp; data processors mapped</div>
+          </article>
 
-</main>
-</div>
+          <article class="kpi-card" id="kpi-consents">
+            <div class="kpi-card-header">
+              <span class="kpi-label">CONSENT RECORDS</span>
+              <div class="kpi-icon consents-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-value" id="kv-consents">—</div>
+            <div class="kpi-sub">Authorized processing grants</div>
+          </article>
 
-<!-- Toast notification -->
-<div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+          <article class="kpi-card" id="kpi-exposure">
+            <div class="kpi-card-header">
+              <span class="kpi-label">DISCLOSURE SIGNALS</span>
+              <div class="kpi-icon exposure-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                  </path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-value" id="kv-exposure">—</div>
+            <div class="kpi-sub" id="kv-exposure-detail">Public breach &amp; DNS exposures</div>
+          </article>
 
-<!-- Draft modal -->
-<div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-  <div class="modal-box">
-    <button class="modal-close" id="modal-close" aria-label="Close modal">×</button>
-    <div class="eyebrow cyan-text">REQUEST PREVIEW</div>
-    <h2 id="modal-title">Privacy Request Draft</h2>
-    <p id="modal-meta" class="muted-text"></p>
-    <pre id="modal-draft" tabindex="0"></pre>
-    <div class="modal-actions">
-      <button class="btn-primary" id="btn-copy-draft" type="button">📋 Copy Draft</button>
-      <button class="btn-secondary" id="btn-close-modal" type="button">Close</button>
-    </div>
-    <p class="warning-text">Draft only. This has NOT been sent to any service.</p>
+          <article class="kpi-card" id="kpi-requests">
+            <div class="kpi-card-header">
+              <span class="kpi-label">ERASURE DRAFTS</span>
+              <div class="kpi-icon requests-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-value" id="kv-requests">—</div>
+            <div class="kpi-sub">Prepared legal DSAR notices</div>
+          </article>
+        </div>
+
+        <!-- Security Scoreboard & Action Center -->
+        <div class="two-col-grid">
+
+          <!-- SecOps Risk Gauge Panel -->
+          <article class="panel risk-panel">
+            <div class="panel-header">
+              <div>
+                <div class="eyebrow">RISK SCORING ENGINE</div>
+                <h3>Composite Exposure Index</h3>
+              </div>
+              <span class="badge badge-info">CVSS-ALIGNED</span>
+            </div>
+
+            <div class="risk-display">
+              <div class="gauge-wrap">
+                <div class="gauge" id="gauge" role="meter" aria-label="Risk score gauge">
+                  <div class="gauge-inner">
+                    <strong id="gauge-score">—</strong>
+                    <small>/ 100</small>
+                  </div>
+                </div>
+              </div>
+              <div class="risk-info">
+                <span class="risk-label" id="risk-label-badge">Evaluating…</span>
+                <h4>Security Perimeter Status</h4>
+                <p id="risk-text">Loading telemetry analysis…</p>
+                <div class="risk-legend">
+                  <span class="legend-pill guarded"><span class="legend-dot"></span>Guarded (0–29)</span>
+                  <span class="legend-pill elevated"><span class="legend-dot"></span>Elevated (30–59)</span>
+                  <span class="legend-pill high"><span class="legend-dot"></span>Critical (60+)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel-footer">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 14 14"></polyline>
+              </svg>
+              <span>Score calculated from verified third-party incidents, SPF/DMARC routing, and breach
+                catalogues.</span>
+            </div>
+          </article>
+
+          <!-- Threat Remediation Toolkit -->
+          <article class="panel quick-panel">
+            <div class="panel-header">
+              <div>
+                <div class="eyebrow">REMEDIATION WORKFLOWS</div>
+                <h3>Privacy Operations</h3>
+              </div>
+            </div>
+
+            <div class="quick-actions">
+              <button class="quick-action" data-goto="consent" id="qa-consent" type="button">
+                <div class="qa-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <div class="qa-text">
+                  <strong>Manage Service Consents</strong>
+                  <small>Review permissions or withdraw authorizations</small>
+                </div>
+                <span class="qa-arrow">&rarr;</span>
+              </button>
+
+              <button class="quick-action" data-goto="discovery" id="qa-discovery" type="button">
+                <div class="qa-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                </div>
+                <div class="qa-text">
+                  <strong>Initiate Threat Scan</strong>
+                  <small>Query breach catalogues and web indexes</small>
+                </div>
+                <span class="qa-arrow">&rarr;</span>
+              </button>
+
+              <button class="quick-action" data-goto="requests" id="qa-requests" type="button">
+                <div class="qa-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                  </svg>
+                </div>
+                <div class="qa-text">
+                  <strong>Draft DSAR Erasure Notice</strong>
+                  <small>Generate legally binding GDPR Art. 17 notice</small>
+                </div>
+                <span class="qa-arrow">&rarr;</span>
+              </button>
+
+              <button class="quick-action" data-goto="audit" id="qa-audit" type="button">
+                <div class="qa-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </div>
+                <div class="qa-text">
+                  <strong>Inspect Audit Trail</strong>
+                  <small>SIEM event log for this temporary session</small>
+                </div>
+                <span class="qa-arrow">&rarr;</span>
+              </button>
+            </div>
+          </article>
+
+        </div>
+
+        <!-- Active Service Inventory Table -->
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="eyebrow">PERIMETER INVENTORY</div>
+              <h3>Active Tracked Services</h3>
+            </div>
+            <button class="btn-link" data-goto="consent" id="view-all-btn" type="button">View all services
+              &rarr;</button>
+          </div>
+
+          <div class="table-wrap">
+            <table id="recent-table" aria-label="Recently tracked services">
+              <thead>
+                <tr>
+                  <th>SERVICE ENTITY</th>
+                  <th>DATA CATEGORY</th>
+                  <th>CONSENT POSTURE</th>
+                  <th>TELEMETRY SOURCE</th>
+                </tr>
+              </thead>
+              <tbody id="recent-tbody"></tbody>
+            </table>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- ─────────────── VIEW 2: EXPOSURE TRACKER ─────────────── -->
+      <section class="view" id="view-exposure">
+        <div class="view-intro">
+          <div>
+            <div class="eyebrow">SECURITY INCIDENT INTELLIGENCE</div>
+            <h2>Exposure Tracker</h2>
+            <p class="muted-text">Verified incident disclosures, compromised credentials, and public internet mentions.
+            </p>
+          </div>
+          <span class="badge badge-info">SESSION RAM</span>
+        </div>
+
+        <div id="exposure-summary-bar" class="exposure-summary-bar"></div>
+
+        <div class="filter-row">
+          <label class="filter-label" for="sev-filter">Incident Severity:</label>
+          <select id="sev-filter" class="select-input" aria-label="Filter exposures by severity">
+            <option value="">All Severities</option>
+            <option value="high">Critical / High Severity</option>
+            <option value="medium">Medium Severity</option>
+            <option value="low">Low Severity / Informational</option>
+          </select>
+        </div>
+
+        <div id="exposure-grid" class="exposure-grid"></div>
+      </section>
+
+      <!-- ─────────────── VIEW 3: EXPOSURE SCANNER ─────────────── -->
+      <section class="view" id="view-discovery">
+        <div class="view-intro">
+          <div>
+            <div class="eyebrow">CONSENT-ENFORCED OSINT TELEMETRY</div>
+            <h2>Exposure Scanner</h2>
+            <p class="muted-text">Query public disclosure repositories, domain MX records, and public indexes with
+              explicit opt-in.</p>
+          </div>
+          <span class="badge badge-info">OPT-IN ENFORCED</span>
+        </div>
+
+        <div class="discovery-layout">
+          <!-- Left Column: Controls & Target Identifiers -->
+          <div class="discovery-controls">
+
+            <!-- Verification Gate -->
+            <div id="disc-auth-gate" class="discovery-gate-panel">
+              <div class="gate-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+              <div class="gate-content">
+                <div class="eyebrow">OWNERSHIP ENFORCEMENT</div>
+                <h3>Verify Account Ownership</h3>
+                <p class="muted-text">
+                  To prevent unauthorized scans against third-party identifiers, NumberShield requires single-use code
+                  verification before scanning external repositories.
+                </p>
+                <div class="gate-features">
+                  <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg> 30-min isolated session</span>
+                  <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg> Zero permanent storage</span>
+                  <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg> Strict IDOR boundaries</span>
+                </div>
+                <button class="btn-primary" id="btn-gate-verify" type="button" style="margin-top:14px">
+                  Verify Account Ownership
+                </button>
+              </div>
+            </div>
+
+            <div id="disc-auth-active" class="discovery-auth-active hidden">
+              <span class="status-dot online"></span>
+              <span>Authenticated Account: <strong id="disc-verified-email-display">user@example.com</strong></span>
+              <span class="badge badge-ok" style="margin-left:auto">VERIFIED SESSION</span>
+            </div>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>1. Telemetry Sources</h3>
+                  <p class="muted-text">Select repositories to query.</p>
+                </div>
+                <span class="badge badge-info">SOURCES</span>
+              </div>
+
+              <div class="source-list">
+                <label class="source-item" for="src-email">
+                  <input type="checkbox" id="src-email" checked>
+                  <div class="source-info">
+                    <strong>Email Identity &amp; Platform Evidence</strong>
+                    <small>Queries verified DNS mail routing, MX SPF/DMARC configurations, and platform
+                      presence.</small>
+                    <em id="email-state" class="source-state">Ready &middot; Active</em>
+                  </div>
+                </label>
+
+                <label class="source-item" for="src-web">
+                  <input type="checkbox" id="src-web">
+                  <div class="source-info">
+                    <strong>Public Search &amp; Paste Index</strong>
+                    <small>Scans public web search indexes and code repositories for unredacted identifier
+                      leaks.</small>
+                    <em id="web-state" class="source-state">Ready &middot; Filtered</em>
+                  </div>
+                </label>
+
+                <label class="source-item" for="src-breach">
+                  <input type="checkbox" id="src-breach">
+                  <div class="source-info">
+                    <strong>Verified Breach Catalogues</strong>
+                    <small>Cross-checks account against verified public data breach disclosures (XposedOrNot /
+                      HIBP).</small>
+                    <em id="breach-state" class="source-state">Ready &middot; Real-time</em>
+                  </div>
+                </label>
+              </div>
+
+              <div class="consent-box">
+                <label class="consent-check" for="discovery-consent">
+                  <input type="checkbox" id="discovery-consent">
+                  <span>I confirm that I own or am authorized to check these identifiers. I consent to querying the
+                    selected telemetry repositories.</span>
+                </label>
+              </div>
+
+              <div class="field-row">
+                <label class="field-label" for="disc-phone">
+                  Target Phone Number <small>(Optional &middot; Web leak search)</small>
+                  <input type="tel" id="disc-phone" class="text-input" autocomplete="off" maxlength="32"
+                    placeholder="+1 555-0100">
+                </label>
+                <label class="field-label" for="disc-email">
+                  Target Email Address <small>(Optional &middot; Breach check)</small>
+                  <input type="email" id="disc-email" class="text-input" autocomplete="off" maxlength="254"
+                    placeholder="name@example.com">
+                </label>
+              </div>
+
+              <div class="disc-actions">
+                <button id="btn-run-discovery" class="btn-primary" type="button">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <span>Run Exposure Scan</span>
+                </button>
+                <button id="btn-download-report" class="btn-secondary" type="button" style="display:none">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>Export Audit JSON</span>
+                </button>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>Integration Endpoints</h3>
+                </div>
+              </div>
+              <div id="disc-status" class="disc-status-display">Checking provider connectivity…</div>
+            </article>
+          </div>
+
+          <!-- Right Column: Compliance Guarantees -->
+          <article class="panel limitations-panel">
+            <div class="panel-header">
+              <div>
+                <h3>2. SecOps Guarantees</h3>
+                <p class="muted-text">Zero-trust architecture safeguards.</p>
+              </div>
+            </div>
+
+            <div class="limits-list">
+              <div class="limit-item">
+                <div class="limit-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <strong>Zero Mailbox Ingress</strong>
+                  <p>Private email inboxes are never accessed. Only verified domain DNS and public registries are
+                    queried.</p>
+                </div>
+              </div>
+
+              <div class="limit-item">
+                <div class="limit-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path
+                      d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                    </path>
+                  </svg>
+                </div>
+                <div>
+                  <strong>Exact-Match Sanitization</strong>
+                  <p>Search results from public indexes are filtered to remove generic login portals and irrelevant
+                    matches.</p>
+                </div>
+              </div>
+
+              <div class="limit-item">
+                <div class="limit-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </div>
+                <div>
+                  <strong>Automatic Memory Purge</strong>
+                  <p>All in-memory scans expire and self-destruct after 15 minutes of session inactivity.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+
+        </div>
+
+        <!-- Scan Results Panel -->
+        <article class="panel results-panel" id="results-panel">
+          <div class="panel-header">
+            <div>
+              <div class="eyebrow">TELEMETRY OUTPUT</div>
+              <h3>Scan Findings</h3>
+              <p class="muted-text">Source-provenanced incident records and public mentions.</p>
+            </div>
+            <span class="badge badge-info" id="result-count-badge">0 findings</span>
+          </div>
+
+          <div id="disc-errors"></div>
+
+          <div id="disc-results" class="disc-results">
+            <div class="empty-state">
+              <div class="empty-icon">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </div>
+              <p>No scans executed in this session yet.<br>Select telemetry sources above and click &quot;Run Exposure
+                Scan&quot;.</p>
+            </div>
+          </div>
+
+          <div id="disc-limits" class="disc-limitations hidden"></div>
+        </article>
+      </section>
+
+      <!-- ─────────────── VIEW 4: CONSENT GOVERNANCE ─────────────── -->
+      <section class="view" id="view-consent">
+        <div class="view-intro">
+          <div>
+            <div class="eyebrow">PRIVACY PERMISSION GOVERNANCE</div>
+            <h2>Consent Manager</h2>
+            <p class="muted-text">Audit, allow, or withdraw processing consent for external services in your local
+              inventory.</p>
+          </div>
+          <span class="badge badge-warning">LOCAL RECORD</span>
+        </div>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Tracked Third-Party Processors</h3>
+              <p class="muted-text">Updating a status updates your session permission audit log.</p>
+            </div>
+            <span class="badge badge-info" id="consent-count-badge">0 services</span>
+          </div>
+
+          <div class="table-wrap">
+            <table id="consent-table" aria-label="Consent records">
+              <thead>
+                <tr>
+                  <th>SERVICE ENTITY</th>
+                  <th>CATEGORY</th>
+                  <th>CONSENT STATE</th>
+                  <th>LAST AUDITED</th>
+                  <th>ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="consent-tbody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <!-- ─────────────── VIEW 5: PRIVACY REQUESTS ─────────────── -->
+      <section class="view" id="view-requests">
+        <div class="view-intro">
+          <div>
+            <div class="eyebrow">STATUTORY DATA REMEDIATION</div>
+            <h2>Data Erasure &amp; DSAR Notices</h2>
+            <p class="muted-text">Draft legally binding GDPR Art. 17 (Right to be Forgotten) and CCPA statutory deletion
+              notices.</p>
+          </div>
+        </div>
+
+        <div class="requests-layout">
+
+          <!-- Creator Form -->
+          <article class="panel create-panel">
+            <div class="panel-header">
+              <div>
+                <h3>Draft DSAR Request</h3>
+                <p class="muted-text">Select target processor and legal basis.</p>
+              </div>
+            </div>
+
+            <form id="request-form" novalidate>
+              <label class="field-label" for="svc-choice">
+                Target Data Processor
+                <select id="svc-choice" class="select-input" required
+                  aria-label="Select service for privacy request"></select>
+              </label>
+
+              <label class="field-label" for="req-type">
+                Statutory Request Type
+                <select id="req-type" class="select-input" aria-label="Select request type">
+                  <option value="deletion">GDPR Art. 17 / CCPA - Permanent Erasure Request</option>
+                  <option value="consent_withdrawal">GDPR Art. 7(3) - Revocation of Processing Consent</option>
+                  <option value="access">GDPR Art. 15 - Subject Access Request (DSAR)</option>
+                </select>
+              </label>
+
+              <button class="btn-primary full-width" type="submit" id="btn-create-request">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>Generate Statutory Notice</span>
+              </button>
+            </form>
+          </article>
+
+          <!-- Drafts Feed -->
+          <div class="requests-list-wrap">
+            <div id="request-list" class="request-list"></div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ─────────────── VIEW 6: AUDIT TRAIL ─────────────── -->
+      <section class="view" id="view-audit">
+        <div class="view-intro">
+          <div>
+            <div class="eyebrow">SIEM SESSION AUDIT TRAIL</div>
+            <h2>Security Event Log</h2>
+            <p class="muted-text">Immutable sequence of identity checks, consent adjustments, and request creations in
+              this session.</p>
+          </div>
+          <button class="btn-secondary" id="btn-refresh-audit" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            <span>Refresh Events</span>
+          </button>
+        </div>
+
+        <article class="panel">
+          <div id="audit-list"></div>
+        </article>
+      </section>
+
+      <!-- ─────────────── VIEW 7: PHONE PERIMETER ─────────────── -->
+      <section class="view" id="view-phone-privacy">
+        <div class="view-intro">
+          <div>
+            <div class="eyebrow">MOBILE PERIMETER INTELLIGENCE</div>
+            <h2>Phone Privacy Management</h2>
+            <p class="muted-text">Identify phone-number exposures, public reverse-lookup records, and telecom
+              disclosures.</p>
+          </div>
+          <span class="badge badge-info" id="phone-privacy-badge">ACTIVE</span>
+        </div>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="eyebrow">NUMBER EXPOSURE FEED</div>
+              <h3>Phone Exposure Findings</h3>
+              <p class="muted-text">Signals tied to your verified phone number.</p>
+            </div>
+            <span class="badge badge-ok" id="pp-finder-badge">VERIFIED SESSION</span>
+          </div>
+
+          <div id="pp-finder-output">
+            <div class="empty-state">
+              <div class="empty-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                  <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                </svg>
+              </div>
+              <p id="pp-finder-msg">Loading exposure signals…</p>
+            </div>
+          </div>
+
+          <div class="disc-actions" style="margin-top:16px">
+            <button class="btn-secondary" data-goto="exposure" type="button">Open Exposure Signals</button>
+          </div>
+        </article>
+
+        <div class="two-col-grid">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Public Web Search</h3>
+                <p class="muted-text">Scan search indexes for unredacted phone leaks.</p>
+              </div>
+              <span class="badge badge-info" id="pp-web-badge">CONFIGURED</span>
+            </div>
+            <p id="pp-web-text" class="muted-text">Checking configuration…</p>
+            <div class="disc-actions" style="margin-top:14px">
+              <button class="btn-secondary" data-goto="discovery" type="button">Open Exposure Scanner</button>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Breach Repositories</h3>
+                <p class="muted-text">Identify compromises exposing mobile MSISDNs.</p>
+              </div>
+              <span class="badge badge-ok" id="pp-breach-badge">ACTIVE</span>
+            </div>
+            <p id="pp-breach-text" class="muted-text">Checking configuration…</p>
+            <div class="disc-actions" style="margin-top:14px">
+              <button class="btn-secondary" data-goto="discovery" type="button">Open Exposure Scanner</button>
+            </div>
+          </article>
+        </div>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Zero Mailbox Ingress</h3>
+              <p class="muted-text">Private mailbox scanning is prohibited by design to protect confidentiality.</p>
+            </div>
+            <span class="badge badge-ok" id="pp-gmail-badge">PROTECTED</span>
+          </div>
+          <p id="pp-gmail-text" class="muted-text">NumberShield strictly forbids reading user emails. Only public breach
+            catalogues and indexed web sources are checked.</p>
+        </article>
+
+        <div class="two-col-grid">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Consent Records</h3>
+              </div>
+              <span class="badge badge-warning" id="pp-consent-badge">LOCAL</span>
+            </div>
+            <div id="pp-consent-count" class="disc-status-display">Loading consent records…</div>
+            <div class="disc-actions" style="margin-top:12px">
+              <button class="btn-secondary" data-goto="consent" type="button">Open Consent Governance</button>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Remediation Drafts</h3>
+              </div>
+              <span class="badge badge-info" id="pp-requests-badge">DRAFTS</span>
+            </div>
+            <div id="pp-requests-count" class="disc-status-display">Loading draft requests…</div>
+            <div class="disc-actions" style="margin-top:12px">
+              <button class="btn-secondary" data-goto="requests" type="button">Open DSAR Notices</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ─────────────── VIEW 8: SECURITY AUDIT & CONTROLS ─────────────── -->
+      <section class="view" id="view-security-audit">
+        <div class="view-intro">
+          <div>
+            <div class="eyebrow">CONTROLS VERIFICATION &amp; METRICS</div>
+            <h2>Security Posture Dashboard</h2>
+            <p class="muted-text">Real-time telemetry, RAM self-destruction timers, and automated regression self-tests.
+            </p>
+          </div>
+          <span class="badge badge-ok">EPHEMERAL RAM</span>
+        </div>
+
+        <!-- Security Stat Cards -->
+        <div class="kpi-grid">
+          <article class="kpi-card">
+            <div class="kpi-card-header">
+              <span class="kpi-label">POSTURE</span>
+              <div class="kpi-icon consents-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-value" style="color:var(--green)">SECURE</div>
+            <div class="kpi-sub">Zero permanent database</div>
+          </article>
+
+          <article class="kpi-card">
+            <div class="kpi-card-header">
+              <span class="kpi-label">ACTIVE SESSIONS</span>
+              <div class="kpi-icon services-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-value" id="sec-active-sessions">0</div>
+            <div class="kpi-sub">Isolated in-memory tenants</div>
+          </article>
+
+          <article class="kpi-card">
+            <div class="kpi-card-header">
+              <span class="kpi-label">IN-MEMORY SCANS</span>
+              <div class="kpi-icon exposure-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-value" id="sec-active-scans">0</div>
+            <div class="kpi-sub">Auto-purged on 15m TTL</div>
+          </article>
+
+          <article class="kpi-card">
+            <div class="kpi-card-header">
+              <span class="kpi-label">MEMORY PURGES</span>
+              <div class="kpi-icon requests-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-value" id="sec-purged-records">0</div>
+            <div class="kpi-sub">Background sweeps completed</div>
+          </article>
+        </div>
+
+        <!-- Automated Controls Test Runner -->
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Automated Security Controls Verification</h3>
+              <p class="muted-text">Executes real-time regression tests verifying session isolation, single-use OTP
+                invalidation, and IDOR protection.</p>
+            </div>
+            <button class="btn-primary" id="btn-run-sec-tests" type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span>Run Security Self-Tests</span>
+            </button>
+          </div>
+
+          <div class="table-wrap">
+            <table id="sec-tests-table" aria-label="Security self test results">
+              <thead>
+                <tr>
+                  <th>TEST ID</th>
+                  <th>SECURITY CONTROL</th>
+                  <th>STATUS</th>
+                  <th>VERIFICATION EVIDENCE</th>
+                </tr>
+              </thead>
+              <tbody id="sec-tests-tbody">
+                <tr>
+                  <td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px">
+                    Click &quot;Run Security Self-Tests&quot; to execute real-time automated verification.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel-footer" id="sec-test-footer">No tests executed in this session yet.</div>
+        </article>
+
+      </section>
+
+      <!-- Modern SecOps Footer -->
+      <footer class="app-footer">
+        <div class="footer-left">
+          <span>&copy; 2026 NumberShield Enterprise</span>
+          <span class="sep">&middot;</span>
+          <span>Privacy Engineering &amp; Exposure Defense</span>
+        </div>
+        <div class="footer-right">
+          <span>Zero-Knowledge RAM Core</span>
+          <span class="sep">&middot;</span>
+          <span>SOC-2 Type II Aligned</span>
+        </div>
+      </footer>
+
+    </main>
   </div>
-</div>
 
-<script src="/static/app.js"></script>
+  <!-- Toast notification -->
+  <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Draft modal -->
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-box">
+      <button class="modal-close" id="modal-close" aria-label="Close modal">&times;</button>
+      <div class="eyebrow">STATUTORY LEGAL NOTICE</div>
+      <h2 id="modal-title">Privacy Request Draft</h2>
+      <p id="modal-meta" class="muted-text"></p>
+      <pre id="modal-draft" tabindex="0"></pre>
+      <div class="modal-actions">
+        <button class="btn-primary" id="btn-copy-draft" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span>Copy Statutory Notice</span>
+        </button>
+        <button class="btn-secondary" id="btn-close-modal" type="button">Close Preview</button>
+      </div>
+      <p class="warning-text">Draft preview only. NumberShield generates statutory templates; requests must be sent
+        directly to processor DPO contacts.</p>
+    </div>
+  </div>
+
+  <!-- Passwordless Authentication Modal -->
+  <div id="auth-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+    <div class="modal-box" style="max-width:440px">
+      <button class="modal-close" id="auth-modal-close" aria-label="Close modal">&times;</button>
+      <div class="eyebrow">IDENTITY VERIFICATION</div>
+      <h2 id="auth-modal-title">Verify Email Ownership</h2>
+      <p class="muted-text" style="font-size:13px;margin-bottom:18px">
+        To protect user privacy and prevent unauthorized queries against arbitrary accounts, NumberShield requires
+        single-use verification. No permanent credentials are stored.
+      </p>
+
+      <!-- Step 1: Request OTP -->
+      <div id="auth-step-1">
+        <label class="field-label" for="auth-email-input">
+          Account Email Address
+          <input type="email" id="auth-email-input" class="text-input" placeholder="name@domain.com" required
+            autocomplete="email">
+        </label>
+
+        <button class="btn-primary full-width" id="btn-send-otp" type="button" style="margin-top:14px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+          <span>Send Verification Code</span>
+        </button>
+
+        <div id="auth-error-msg" style="color:var(--red);font-size:12px;margin-top:10px;text-align:center;display:none">
+        </div>
+
+        <div class="auth-divider">
+          <span>OR</span>
+        </div>
+
+        <a href="/api/auth/google/login" class="btn-google">
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <path fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+            <path fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+            <path fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+            <path fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+          </svg>
+          <span>Sign in with Google (Identity Only)</span>
+        </a>
+
+        <p style="font-size:11px;color:var(--text-dim);text-align:center;margin-top:10px">
+          Email OTP operates directly without external client configuration.
+        </p>
+      </div>
+
+      <!-- Step 2: Enter OTP -->
+      <div id="auth-step-2" class="hidden">
+        <p style="font-size:13px;color:var(--green);margin-bottom:14px" id="auth-sent-notice">
+          Verification code sent to your email.
+        </p>
+
+        <label class="field-label" for="auth-otp-input">
+          Enter 6-Digit Code
+          <input type="text" id="auth-otp-input" class="text-input otp-display-code" maxlength="6" placeholder="······"
+            autocomplete="one-time-code">
+        </label>
+
+        <button class="btn-primary full-width" id="btn-verify-otp" type="button" style="margin-top:14px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Verify Code &amp; Launch Session</span>
+        </button>
+
+        <div id="auth-verify-error"
+          style="color:var(--red);font-size:12px;margin-top:10px;text-align:center;display:none"></div>
+
+        <button class="btn-link full-width" id="btn-back-step-1" type="button"
+          style="margin-top:12px;text-align:center">
+          &larr; Back to email entry
+        </button>
+      </div>
+
+      <p class="warning-text" style="margin-top:16px;font-size:11px">
+        Single-use code expires in 5 minutes. Temporary session auto-destructs after 30 minutes of inactivity.
+      </p>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=4.0.0" defer></script>
 </body>
+
 </html>
