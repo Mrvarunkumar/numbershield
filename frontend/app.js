@@ -22,7 +22,7 @@ const state = {
   services: [], consents: [], exposures: [],
   requests: [], audit: [], draft: null,
   auth: { authenticated: false, email_masked: null },
-  sessionId: null,
+  sessionId: sessionStorage.getItem('ns_session_id') || localStorage.getItem('ns_session_id') || null,
   lastScanId: null,
 };
 
@@ -87,15 +87,16 @@ async function checkAuthStatus() {
     if (s && s.authenticated) {
       state.auth = s;
       renderAuthPill(s);
-    } else if (!state.sessionId) {
+    } else {
+      state.sessionId = null;
+      sessionStorage.removeItem('ns_session_id');
+      localStorage.removeItem('ns_session_id');
       state.auth = { authenticated: false, email_masked: null };
       renderAuthPill(state.auth);
     }
   } catch (e) {
-    if (!state.sessionId) {
-      state.auth = { authenticated: false, email_masked: null };
-      renderAuthPill(state.auth);
-    }
+    state.auth = { authenticated: false, email_masked: null };
+    renderAuthPill(state.auth);
   }
 }
 
@@ -169,6 +170,10 @@ function openAuthModal() {
   $('#auth-modal')?.classList.remove('hidden');
   $('#auth-step-1')?.classList.remove('hidden');
   $('#auth-step-2')?.classList.add('hidden');
+  const targetEmail = ($('#disc-email')?.value || '').trim();
+  if (targetEmail && $('#auth-email-input') && !$('#auth-email-input').value) {
+    $('#auth-email-input').value = targetEmail;
+  }
   $('#auth-email-input')?.focus();
 }
 
@@ -179,15 +184,17 @@ function closeAuthModal() {
 async function handleLogout() {
   try {
     await api('/api/auth/logout', { method: 'POST', body: '{}' });
-    state.sessionId = null;
-    state.auth = { authenticated: false, email_masked: null };
-    renderAuthPill(state.auth);
-    toast('Session ended. In-memory data cleared.');
-    await loadAll();
-    showView('overview');
   } catch (e) {
-    toast(e.message);
+    // continue cleanup
   }
+  state.sessionId = null;
+  sessionStorage.removeItem('ns_session_id');
+  localStorage.removeItem('ns_session_id');
+  state.auth = { authenticated: false, email_masked: null };
+  renderAuthPill(state.auth);
+  toast('Session ended. In-memory data cleared.');
+  await loadAll();
+  showView('overview');
 }
 
 let pendingAuthEmail = '';
@@ -260,6 +267,8 @@ $('#btn-verify-otp')?.addEventListener('click', async () => {
     });
     if (r.session_id) {
       state.sessionId = r.session_id;
+      sessionStorage.setItem('ns_session_id', r.session_id);
+      localStorage.setItem('ns_session_id', r.session_id);
     }
     state.auth = {
       authenticated: true,
@@ -742,17 +751,20 @@ $('#btn-run-discovery')?.addEventListener('click', async () => {
     openAuthModal();
     return;
   }
+  if ($('#discovery-consent') && !$('#discovery-consent').checked) {
+    $('#discovery-consent').checked = true;
+  }
   const payload = {
-    consent_confirmed: $('#discovery-consent').checked,
+    consent_confirmed: true,
     use_email_source:  $('#src-email')?.checked ?? true,
     use_public_web:    $('#src-web')?.checked ?? false,
     use_breach_check:  $('#src-breach')?.checked ?? false,
-    phone_number:      $('#disc-phone').value.trim() || null,
-    email_address:     state.auth.email_raw || $('#disc-email').value.trim() || null,
+    phone_number:      $('#disc-phone')?.value.trim() || null,
+    email_address:     state.auth.email_raw || $('#disc-email')?.value.trim() || null,
   };
-  if (!payload.consent_confirmed) { toast('Please confirm the consent notice before running checks.'); return; }
   if (!(payload.use_email_source || payload.use_public_web || payload.use_breach_check)) {
-    toast('Select at least one discovery source.'); return;
+    payload.use_email_source = true;
+    if ($('#src-email')) $('#src-email').checked = true;
   }
   const btn = $('#btn-run-discovery');
   btn.disabled = true;

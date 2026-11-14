@@ -1,8 +1,3 @@
-.env
-*.env
-.env.*
-!.env.example
-__pycache__/
 *.py[cod]
 *$py.class
 env/
@@ -11,5 +6,6 @@ backend/env/
 client_secret_580022267858-urm7nev65t1ljsn9a9nv9arcjag3sfao.apps.googleusercontent.com.json
 client_secret*.json
 *.log
-
-
+# TLS certificates — do NOT commit private keys
+certs/key.pem
+certs/*.pfx

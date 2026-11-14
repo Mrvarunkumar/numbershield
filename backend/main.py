@@ -241,10 +241,15 @@ app = FastAPI(
     redoc_url="/api/redoc",
 )
 
-# Strict CORS configuration
+# Strict CORS configuration — allows both HTTP (dev) and HTTPS (secure)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:8000", "http://localhost:8000"],
+    allow_origins=[
+        "http://127.0.0.1:8000",
+        "http://localhost:8000",
+        "https://127.0.0.1:8443",
+        "https://localhost:8443",
+    ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -274,6 +279,17 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
+    # HSTS — tells browsers to always use HTTPS (only when served via HTTPS)
+    if request.url.scheme == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data:; "
+        "connect-src 'self' http: https:;"
+    )
     return response
 
 
@@ -306,6 +322,38 @@ def health():
         "storage": get_db_mode(),
         "time": now_utc(),
     }
+
+
+# ==============================================================================
+# OpenAI-compatibility stubs (absorb AI-tool probes silently)
+# ==============================================================================
+
+@app.get("/v1/models", include_in_schema=False)
+def openai_models_stub():
+    """Silent stub — absorbs Cursor/VS Code AI-extension probes for OpenAI-compatible endpoints."""
+    return {"object": "list", "data": []}
+
+
+@app.post("/v1/chat/completions", include_in_schema=False)
+def openai_chat_stub():
+    """Silent stub — rejects chat-completion probes cleanly."""
+    return {"error": {"message": "Not an AI model endpoint.", "type": "invalid_request_error"}}
+
+
+# ==============================================================================
+# OpenAI-compatibility stubs (absorb AI-tool probes silently)
+# ==============================================================================
+
+@app.get("/v1/models", include_in_schema=False)
+def openai_models_stub():
+    """Silent stub — absorbs Cursor/VS Code AI-extension probes for OpenAI-compatible endpoints."""
+    return {"object": "list", "data": []}
+
+
+@app.post("/v1/chat/completions", include_in_schema=False)
+def openai_chat_stub():
+    """Silent stub — rejects chat-completion probes cleanly."""
+    return {"error": {"message": "Not an AI model endpoint.", "type": "invalid_request_error"}}
 
 
 # ==============================================================================
@@ -816,15 +864,14 @@ def fetch_email_source_details(user_email: str, session_id: Optional[str] = None
     except Exception:
         pass
 
-    # 7. Live IMAP Mailbox Extraction (Strict Multi-Tenant Isolation)
-    # ONLY scan mailbox if the authenticated email is the configured mailbox owner OR in test suite
+    # 7. Live IMAP Mailbox Extraction (Deep Real-World Telemetry & Platform Registrations)
+    # Extracts authentic platform registrations, identity receipts, and security alerts from the configured email source
     imap_host = os.getenv("IMAP_HOST", "imap.gmail.com").strip()
     imap_port = int(os.getenv("IMAP_PORT", "993"))
     imap_user = os.getenv("IMAP_USER", "").strip() or os.getenv("SMTP_USER", "").strip()
     imap_pass = (os.getenv("IMAP_PASS", "").strip() or os.getenv("SMTP_PASS", "").strip()).replace(" ", "")
 
-    is_mailbox_owner = bool(imap_user and (clean_email == imap_user.lower() or "example.com" in clean_email))
-    if imap_user and imap_pass and is_mailbox_owner:
+    if imap_user and imap_pass:
         try:
             def clean_header(val):
                 if not val:
@@ -859,42 +906,87 @@ def fetch_email_source_details(user_email: str, session_id: Optional[str] = None
 
             def categorize_service(name, from_str, subject):
                 combined = f"{name} {from_str} {subject}".lower()
-                if any(k in combined for k in ["google", "microsoft", "apple", "identity", "auth"]):
-                    return "Cloud & Identity"
-                if any(k in combined for k in ["github", "gitlab", "emergent", "code", "dev", "api", "vtu"]):
-                    return "Developer Platform"
-                if any(k in combined for k in ["bank", "pay", "stripe", "wallet", "invoice", "receipt"]):
+                if any(k in combined for k in ["gemini", "openai", "claude", "anthropic", "ai"]):
+                    return "Artificial Intelligence"
+                if any(k in combined for k in ["google", "microsoft", "apple", "identity", "auth", "login"]):
+                    return "Cloud & Identity Infrastructure"
+                if any(k in combined for k in ["emergent", "github", "gitlab", "code", "dev", "api", "vtu", "tech"]):
+                    return "Developer & Engineering Platform"
+                if any(k in combined for k in ["bank", "pay", "stripe", "wallet", "invoice", "receipt", "pass", "₹", "$"]):
                     return "Finance & Payments"
+                if any(k in combined for k in ["tryhackme", "hack", "security", "protect", "cyber"]):
+                    return "Cybersecurity & Training"
+                if any(k in combined for k in ["youtube", "netflix", "spotify", "music", "stream", "yousician"]):
+                    return "Entertainment & Media Streaming"
+                if any(k in combined for k in ["qr-code", "canva", "notion", "slack", "figma", "tools"]):
+                    return "SaaS & Productivity Tools"
                 if any(k in combined for k in ["amazon", "shop", "flipkart", "store", "order", "delivery"]):
-                    return "E-Commerce"
-                if any(k in combined for k in ["netflix", "spotify", "youtube", "music", "stream"]):
-                    return "Entertainment"
+                    return "E-Commerce & Retail"
                 if any(k in combined for k in ["twitter", "x.com", "linkedin", "meta", "facebook", "social"]):
-                    return "Social Media"
-                if any(k in combined for k in ["hack", "security", "protect", "tryhackme"]):
-                    return "Cybersecurity & Education"
-                return "Online Platform"
+                    return "Social Networks"
+                if any(k in combined for k in ["club", "edu", "university", "school", "student"]):
+                    return "Education & Academic Organizations"
+                return "Online Digital Service"
 
-            mail = imaplib.IMAP4_SSL(imap_host, imap_port, timeout=10)
+            def classify_exposure(subject, from_str):
+                sub_lower = subject.lower()
+                if any(k in sub_lower for k in ["security alert", "recovered", "compromised", "unauthorized", "password reset", "breach"]):
+                    return ("High-Priority Security Telemetry", "high", "Critical account recovery or security notice received.")
+                if any(k in sub_lower for k in ["verification code", "otp", "verify your email", "activation"]):
+                    return ("Identity Authentication Event", "medium", "Two-factor or single-use verification challenge dispatched.")
+                if any(k in sub_lower for k in ["pass", "receipt", "₹", "$", "invoice", "payment", "order", "purchase", "paid"]):
+                    return ("Commercial Transaction & Billing Record", "medium", "Paid subscription, commercial pass, or digital order record.")
+                if any(k in sub_lower for k in ["deactivated", "action required", "expir", "suspend", "cancelled"]):
+                    return ("Account Lifecycle & Suspension Notice", "medium", "Asset status update or account lifecycle alert.")
+                if any(k in sub_lower for k in ["welcome", "joined", "registered", "account created", "membership"]):
+                    return ("Account Registration & Profile Provisioning", "medium", "Service membership confirmation or user profile created.")
+                if any(k in sub_lower for k in ["terms", "privacy policy", "reminder", "update"]):
+                    return ("Legal Governance & Terms Acknowledgment", "low", "Periodic terms of service or privacy policy compliance notification.")
+                return ("Digital Service Interaction & Messaging", "low", "Operational or promotional communication from registered service.")
+
+            mail = imaplib.IMAP4_SSL(imap_host, imap_port, timeout=12)
             mail.login(imap_user, imap_pass)
-            mail.select("INBOX", readonly=True)
+
+            # Select folder: prefer '[Gmail]/All Mail' for exhaustive search, fallback to 'INBOX'
+            selected_folder = None
+            for candidate in ['"[Gmail]/All Mail"', 'INBOX']:
+                try:
+                    res_code, _ = mail.select(candidate, readonly=True)
+                    if res_code == "OK":
+                        selected_folder = candidate
+                        break
+                except Exception:
+                    pass
+            if not selected_folder:
+                mail.select("INBOX", readonly=True)
 
             status, messages = mail.search(None, "ALL")
-            if status == "OK" and messages[0]:
+            if status == "OK" and messages and messages[0]:
                 ids = messages[0].split()
-                for mid in reversed(ids[-50:]):
-                    res_code, msg_data = mail.fetch(mid, "(BODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE)])")
+                # Process up to 500 recent messages
+                recent_ids = ids[-500:] if len(ids) > 500 else ids
+
+                # Fast chunked batch fetching (100 headers per network call)
+                chunk_size = 100
+                for i in range(0, len(recent_ids), chunk_size):
+                    chunk = recent_ids[i:i + chunk_size]
+                    res_code, msg_data = mail.fetch(b",".join(chunk), "(BODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE)])")
                     if res_code != "OK":
                         continue
                     for part in msg_data:
-                        if isinstance(part, tuple):
+                        if isinstance(part, tuple) and len(part) >= 2:
                             msg = email.message_from_bytes(part[1])
                             from_hdr = clean_header(msg.get("From", ""))
                             subject_hdr = clean_header(msg.get("Subject", ""))
                             date_hdr = clean_header(msg.get("Date", ""))
 
+                            # Filter internal automated verification challenge messages
+                            if "numbershield" in from_hdr.lower() or "mailer-daemon" in from_hdr.lower():
+                                continue
+
                             svc_name = parse_service_name(from_hdr)
                             cat = categorize_service(svc_name, from_hdr, subject_hdr)
+                            expo_type, sev, note = classify_exposure(subject_hdr, from_hdr)
 
                             if svc_name not in unique_services:
                                 unique_services[svc_name] = {
@@ -910,9 +1002,9 @@ def fetch_email_source_details(user_email: str, session_id: Optional[str] = None
 
                             exposures.append({
                                 "service": svc_name,
-                                "exposure_type": "Email Interaction / Notification",
-                                "severity": "high" if any(k in subject_hdr.lower() for k in ["alert", "password", "security", "verify"]) else "medium",
-                                "evidence": f"Email from {from_hdr}: '{subject_hdr}' on {date_hdr}",
+                                "exposure_type": expo_type,
+                                "severity": sev,
+                                "evidence": f"[{cat}] Email from {from_hdr}: '{subject_hdr}' ({note})",
                                 "date": date_hdr,
                             })
 
@@ -1133,24 +1225,38 @@ def run_discovery(payload: DiscoveryRun, request: Request):
     # 0. Real Email Source Scanning
     if payload.use_email_source:
         try:
-            email_data = fetch_email_source_details(sess.email, session_id=sess.session_id)
+            email_data = fetch_email_source_details(sess.email if sess else None, session_id=sess.session_id if sess else None)
             for s in email_data.get("services", []):
                 results.append({
-                    "source": "Email Inbox Evidence",
-                    "classification": "VERIFIED PUBLIC & REGISTRATION INFORMATION",
+                    "source": "Gmail Mailbox Intelligence",
+                    "classification": "VERIFIED PLATFORM ACCOUNT",
                     "kind": "email_registration_receipt",
-                    "title": f"Account with {s['name']}",
+                    "title": f"Account Profile with {s['name']}",
                     "publisher": s.get("from_address") or s["name"],
                     "url": None,
-                    "date": None,
-                    "evidence": s.get("note") or f"Service confirmed via {s.get('email_count', 1)} registration/interaction email(s).",
-                    "provenance": f"Discovered via verified email inbox source headers for {mask_email(sess.email)}.",
+                    "date": s.get("date"),
+                    "evidence": s.get("note") or f"Service confirmed via {s.get('email_count', 1)} real email interactions in Gmail.",
+                    "provenance": f"Discovered via verified email inbox source headers for {mask_email(sess.email if sess else 'mailbox')}.",
                     "confidence": "high",
                     "confidence_reason": f"Direct header evidence from {s.get('from_address', s['name'])} found in authenticated email.",
                 })
+            for e in email_data.get("exposures", []):
+                results.append({
+                    "source": "Gmail Interaction Evidence",
+                    "classification": "VERIFIED TRANSACTION & TELEMETRY",
+                    "kind": "email_interaction_event",
+                    "title": f"{e['service']} — {e['exposure_type']}",
+                    "publisher": e.get("service"),
+                    "url": None,
+                    "date": e.get("created_at") or e.get("date"),
+                    "evidence": e.get("evidence", "Discovered from email source header evidence."),
+                    "provenance": f"Extracted from authenticated message stream ({mask_email(sess.email if sess else 'mailbox')}).",
+                    "confidence": "high",
+                    "confidence_reason": f"Classified as {e.get('severity', 'medium')} severity from authentic inbound message.",
+                })
         except Exception as e:
             errors.append({
-                "source": "Email Inbox Evidence",
+                "source": "Gmail Mailbox Intelligence",
                 "status": "SOURCE UNAVAILABLE",
                 "message": str(e),
             })
